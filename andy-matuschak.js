@@ -26,6 +26,7 @@ module.exports = ({ SettingTab }) => {
             headerWidthSetting.onChange(() => {
                 pluginOptions.headerWidth = parseInt(headerWidthSetting.getValue().trim())
                 this.pluginInstance.saveData(pluginOptions)
+                this.pluginInstance.plugin.refresh();
             })
 
             const leafWidthSetting = this.addTextSetting(
@@ -39,6 +40,7 @@ module.exports = ({ SettingTab }) => {
             leafWidthSetting.onChange(() => {
                 pluginOptions.leafWidth = parseInt(leafWidthSetting.getValue().trim())
                 this.pluginInstance.saveData(pluginOptions)
+                this.pluginInstance.plugin.refresh();
             })
         }
     }
@@ -85,7 +87,7 @@ module.exports = ({ SettingTab }) => {
 
         async onDisable() {
             console.log("[AM] Disabled");
-            document.getElementById('andy-matuschak-css').remove();
+            this.removeStyle();
             const workspaceEl = this.app.workspace.rootSplit.containerEl;
             workspaceEl.style.overflowX = null;
             const leaves = workspaceEl.querySelectorAll(":scope>div");
@@ -101,8 +103,29 @@ module.exports = ({ SettingTab }) => {
             this.app.workspace.off('file-open', this.focusLeaf);
         }
 
-        layoutReady = () => {
-            this.app.workspace.rootSplit.containerEl.style.overflowX = "auto";
+        refresh = async () => {
+            console.log("[AM] Refresh");
+            
+            const options = await this.instance.loadData()
+            const oldOptions = this.options;
+            this.options = options || this.options;
+            
+            // only re-add the style if the header width changed
+            if(oldOptions.headerWidth != options.headerWidth) this.addStyle();
+            this.recalculateLeaves();
+            
+        }
+
+        removeStyle = () => {
+            const el = document.getElementById('andy-matuschak-css');
+            if(el) el.remove();
+        }
+
+        addStyle = () => {
+            // we don't want to add multiple
+            this.removeStyle();
+            
+            console.log("[AM] Add Style for rotated headers");
 
             // add the css for the sideways titles:
             // let's just paste it in for now and work out 'proper' later
@@ -170,6 +193,12 @@ module.exports = ({ SettingTab }) => {
             }
             `));
             document.getElementsByTagName("head")[0].appendChild(css);
+        }
+
+        layoutReady = () => {
+            this.app.workspace.rootSplit.containerEl.style.overflowX = "auto";
+
+            this.addStyle();
 
             this.app.workspace.off('layout-ready', this.layoutReady);
             this.recalculateLeaves();
