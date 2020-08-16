@@ -26,7 +26,7 @@ module.exports = ({ SettingTab }) => {
             headerWidthSetting.onChange(() => {
                 pluginOptions.headerWidth = parseInt(headerWidthSetting.getValue().trim())
                 this.pluginInstance.saveData(pluginOptions)
-                this.pluginInstance.plugin.refresh();
+                this.pluginInstance.instance.refresh();
             })
 
             const leafWidthSetting = this.addTextSetting(
@@ -40,7 +40,7 @@ module.exports = ({ SettingTab }) => {
             leafWidthSetting.onChange(() => {
                 pluginOptions.leafWidth = parseInt(leafWidthSetting.getValue().trim())
                 this.pluginInstance.saveData(pluginOptions)
-                this.pluginInstance.plugin.refresh();
+                this.pluginInstance.instance.refresh();
             })
         }
     }
