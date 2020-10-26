@@ -1,20 +1,20 @@
-import { App, CustomPlugin, Modal, Notice, PluginSettingTab, Setting } from 'obsidian';
+import { App, Plugin, Modal, Notice, PluginSettingTab, Setting } from 'obsidian';
 
-export default class AndyMatuschakPlugin extends CustomPlugin {
+export default class SlidingPanesPlugin extends Plugin {
 
-  settings: AndyMatuschakSettings;
+  settings: SlidingPanesSettings;
 
   async onInit() {
 
   }
 
   async onload() {
-    this.settings = await this.loadData();
+    this.settings = await this.loadData() || new SlidingPanesSettings();
 
     if (!this.settings.disabled) {
       this.enable();
     }
-    this.addSettingTab(new AndyMatuschakSettingTab(this.app, this));
+    this.addSettingTab(new SlidingPanesSettingTab(this.app, this));
     this.addCommand({
       id: 'toggle-sliding-panes',
       name: 'Toggle Sliding Panes',
@@ -36,7 +36,7 @@ export default class AndyMatuschakPlugin extends CustomPlugin {
   }
 
   enable = () => {
-    if (this.app.workspace.layoutReady) {
+    if ((this.app.workspace as any).layoutReady) {
       this.layoutReady();
     }
     else {
@@ -48,7 +48,7 @@ export default class AndyMatuschakPlugin extends CustomPlugin {
 
   disable = () => {
     this.removeStyle();
-    const workspaceEl = this.app.workspace.rootSplit.containerEl;
+    const workspaceEl = (this.app.workspace as any).rootSplit.containerEl;
     workspaceEl.style.overflowX = null;
     const leaves = workspaceEl.querySelectorAll(":scope>div");
     leaves.forEach((leaf: any, i: number) => {
@@ -64,7 +64,7 @@ export default class AndyMatuschakPlugin extends CustomPlugin {
   }
 
   layoutReady = () => {
-    this.app.workspace.rootSplit.containerEl.style.overflowX = "auto";
+    (this.app.workspace as any).rootSplit.containerEl.style.overflowX = "auto";
 
     this.addStyle();
 
@@ -85,20 +85,17 @@ export default class AndyMatuschakPlugin extends CustomPlugin {
 
   addStyle = () => {
     const css = document.createElement('style');
-    css.type = 'text/css';
     css.id = 'andy-matuschak-css';
-    if (this.settings.headerWidth) {
-      css.appendChild(document.createTextNode(`
-        .workspace-leaf-content{padding-left:${this.settings.headerWidth}px;}
-        .view-header{width:${this.settings.headerWidth}px;}
-      `));
-    }
+    css.appendChild(document.createTextNode(`
+      .workspace-leaf-content{padding-left:${this.settings.headerWidth}px;}
+      .view-header{width:${this.settings.headerWidth}px;}
+    `));
 
     document.getElementsByTagName("head")[0].appendChild(css);
   }
 
   recalculateLeaves = () => {
-    const workspaceEl = this.app.workspace.rootSplit.containerEl;
+    const workspaceEl = (this.app.workspace as any).rootSplit.containerEl;
     const leaves = workspaceEl.querySelectorAll(":scope>div");
     const leafCount = leaves.length;
     leaves.forEach((leaf:any, i:number) => {
@@ -111,9 +108,10 @@ export default class AndyMatuschakPlugin extends CustomPlugin {
   }
 
   focusLeaf = (e: any) => {
+    const rootSplit: any = (this.app.workspace as any).rootSplit;
     // get back to the leaf which has been andy'd
     let leaf:any = this.app.workspace.activeLeaf;
-    while (leaf != null && leaf.parentSplit != null && leaf.parentSplit != this.app.workspace.rootSplit) {
+    while (leaf != null && leaf.parentSplit != null && leaf.parentSplit != rootSplit) {
       leaf = leaf.parentSplit;
     }
 
@@ -123,7 +121,7 @@ export default class AndyMatuschakPlugin extends CustomPlugin {
       const leafNumber = left / this.settings.headerWidth;
       const position = (leafNumber * this.settings.leafWidth) + left;
 
-      const rootEl = this.app.workspace.rootSplit.containerEl;
+      const rootEl = rootSplit.containerEl;
       if (rootEl.scrollLeft < position || rootEl.scrollLeft + rootEl.clientWidth > position + leaf.containerEl.clientWidth) {
         rootEl.scrollTo({ left: position - left, top: 0, behavior: 'smooth' });
       }
@@ -131,16 +129,16 @@ export default class AndyMatuschakPlugin extends CustomPlugin {
   }
 }
 
-class AndyMatuschakSettings {
-  headerWidth: number;
-  leafWidth: number;
-  disabled: boolean;
+class SlidingPanesSettings {
+  headerWidth: number = 32;
+  leafWidth: number = 700;
+  disabled: boolean = false;
 }
 
-class AndyMatuschakSettingTab extends PluginSettingTab {
+class SlidingPanesSettingTab extends PluginSettingTab {
   display(): void {
     let { containerEl } = this;
-    const plugin: any = this.plugin;
+    const plugin: any = (this as any).plugin;
 
     containerEl.empty();
 
