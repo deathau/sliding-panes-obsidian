@@ -1,25 +1,38 @@
 # Andy Matuschak Mode Obsidian Plugin
-Andy Matuschak Mode as a plugin. Utilizing the [volcano](https://github.com/kognise/volcano) unofficial plugin loader by [kognise](https://github.com/kognise/)
+Sliding Panes (Andy Matuschak Mode) as a plugin.
 
-| | |
-|--|--|
-| ![Carl the Turtle](https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/60/google/56/turtle_1f422.png) | "The Volcano plugin system is UNOFFICIAL and UNSUPPORTED no matter how Kognise makes things sound, please use it at your own risk. We still love you though Kognise :purple_heart:" | 
+This project uses Typescript to provide type checking and documentation.
+The repo contains the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
 
+**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
 
-(thanks Carl)
+#### Compatibility
+
+Custom plugins are only available for Obsidian v0.9.7+.
+
+The current API of this repo targets Obsidian **v0.9.7**. 
+
+#### How to use
+
+- Clone this repo.
+- `npm i` or `yarn` to install dependencies
+- `npm run dev` to start compilation in watch mode.
+
+#### How to install the plugin
+
+- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `vault/.obsidian/plugins/plugin-id/`.
 
 ## New Features (vs the CSS-only version)
-- Note headers stack up on the right _as well as_ the left
-- Changing an active pane scrolls that pane into view
-
-## Installation
-1. Make sure [volcano is installed](https://github.com/kognise/volcano#installation)
-2. Copy `andy-matuschak.js` to `~/volcano/plugins` (`%USERPROFILE%\volcano\plugins` on Windows)
-3. Restart Obsidian and watch the magic happen
+- Note headers stack up on the right _as well as_ the left.
+- Changing an active pane scrolls that pane into view.
+- Togglable without having to copy CSS into your theme.
 
 ## Settings
-There are two settings for heading width (the width of the rotated header) and the leaf width (the width of a single markdown page).  
-I haven't quite figured out how to get them to update when you edit them so any changes will currently require a reload to be seen.
+There is a setting to enable or disable the sliding panes effect, which is also
+registered as a command, so you can toggle it from the command pallette or
+assign a hotkey.
+
+There are also two settings for heading width (the width of the rotated header) and the leaf width (the width of a single markdown page).
 
 ## Notes
 This is all very expermental at the moment, so parts might not work, etc.  
