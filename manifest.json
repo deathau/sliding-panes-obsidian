@@ -4,5 +4,6 @@
   "description": "Sliding Panes! Based on the style of [Andy Matuschak's Notes](https://notes.andymatuschak.org/)",
   "isDesktopOnly": false,
   "js": "main.js",
-  "css": "styles.css"
+  "css": "styles.css",
+  "version": "3.0.1"
 }
