@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import {nodeResolve} from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import scss from 'rollup-plugin-scss';
 
 export default {
   input: 'main.ts',
@@ -15,5 +16,6 @@ export default {
     typescript(),
     nodeResolve({browser: true}),
     commonjs(),
+    scss({ output: 'styles.css', sass: require('sass') })
   ]
 };

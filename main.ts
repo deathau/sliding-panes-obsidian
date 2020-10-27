@@ -1,3 +1,4 @@
+import './styles.scss'
 import { App, Plugin, Modal, Notice, PluginSettingTab, Setting } from 'obsidian';
 
 export default class SlidingPanesPlugin extends Plugin {
@@ -79,19 +80,20 @@ export default class SlidingPanesPlugin extends Plugin {
   }
 
   removeStyle = () => {
-    const el = document.getElementById('andy-matuschak-css');
+    const el = document.getElementById('plugin-sliding-panes');
     if (el) el.remove();
+    document.body.classList.remove('plugin-sliding-panes');
   }
 
   addStyle = () => {
     const css = document.createElement('style');
-    css.id = 'andy-matuschak-css';
+    css.id = 'plugin-sliding-panes';
     css.appendChild(document.createTextNode(`
-      .workspace-leaf-content{padding-left:${this.settings.headerWidth}px;}
-      .view-header{width:${this.settings.headerWidth}px;}
+      body.plugin-sliding-panes{--header-width:${this.settings.headerWidth}px;}
     `));
 
     document.getElementsByTagName("head")[0].appendChild(css);
+    document.body.classList.add('plugin-sliding-panes');
   }
 
   recalculateLeaves = () => {
