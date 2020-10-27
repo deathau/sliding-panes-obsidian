@@ -15,7 +15,12 @@ The current API of this repo targets Obsidian **v0.9.7**.
 ## How to install the plugin
 
 - Download the [Latest release](https://github.com/deathau/sliding-panes-obsidian/releases/latest)
-- Extract the `sliding-panes-obsidian` folder from the zip to your vault's plugins folder: `<vault>/.obsidian/plugins/`
+- Extract the `sliding-panes-obsidian` folder from the zip to your vault's plugins folder: `<vault>/.obsidian/plugins/`  
+Note: On some machines the `.obsidian` folder may be hidden. On MacOS you should be able to press `Command+Shift+Dot` to show the folder in Finder.
+- Reload Obsidian
+- If prompted about Safe Mode, you can disable safe mode and enable the plugin.
+Otherwise head to Settings, third-party plugins, make sure safe mode is off and
+enable Sliding Panes from there.
 
 ## New Features (vs the CSS-only version)
 - Note headers stack up on the right _as well as_ the left.
