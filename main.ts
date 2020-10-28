@@ -1,5 +1,5 @@
 import './styles.scss'
-import { App, Plugin, Modal, Notice, PluginSettingTab, Setting } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 export default class SlidingPanesPlugin extends Plugin {
 
@@ -138,24 +138,30 @@ class SlidingPanesSettings {
 }
 
 class SlidingPanesSettingTab extends PluginSettingTab {
+
+  plugin: SlidingPanesPlugin;
+  constructor(app: App, plugin: SlidingPanesPlugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+
   display(): void {
     let { containerEl } = this;
-    const plugin: any = (this as any).plugin;
 
     containerEl.empty();
 
     new Setting(containerEl)
       .setName("Toggle Sliding Panes")
       .setDesc("Turns sliding panes on or off globally")
-      .addToggle(toggle => toggle.setValue(!plugin.settings.disabled)
+      .addToggle(toggle => toggle.setValue(!this.plugin.settings.disabled)
         .onChange((value) => {
-          plugin.settings.disabled = !value;
-          plugin.saveData(plugin.settings);
-          if (plugin.settings.disabled) {
-            plugin.disable();
+          this.plugin.settings.disabled = !value;
+          this.plugin.saveData(this.plugin.settings);
+          if (this.plugin.settings.disabled) {
+            this.plugin.disable();
           }
           else {
-            plugin.enable();
+            this.plugin.enable();
           }
         }));
 
@@ -163,24 +169,24 @@ class SlidingPanesSettingTab extends PluginSettingTab {
       .setName('Header Width')
       .setDesc('The width of the rotated header')
       .addText(text => text.setPlaceholder('Example: 32')
-        .setValue((plugin.settings.headerWidth || '') + '')
+        .setValue((this.plugin.settings.headerWidth || '') + '')
         .onChange((value) => {
           console.log('Header Width: ' + value);
-          plugin.settings.headerWidth = parseInt(value.trim());
-          plugin.saveData(plugin.settings);
-          plugin.refresh();
+          this.plugin.settings.headerWidth = parseInt(value.trim());
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
         }));
     
     new Setting(containerEl)
       .setName('Leaf Width')
       .setDesc('The width of a single markdown pane')
       .addText(text => text.setPlaceholder('Example: 700')
-        .setValue((plugin.settings.leafWidth || '') + '')
+        .setValue((this.plugin.settings.leafWidth || '') + '')
         .onChange((value) => {
           console.log('Leaf Width: ' + value);
-          plugin.settings.leafWidth = parseInt(value.trim());
-          plugin.saveData(plugin.settings);
-          plugin.refresh();
+          this.plugin.settings.leafWidth = parseInt(value.trim());
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
         }));
 
   }
