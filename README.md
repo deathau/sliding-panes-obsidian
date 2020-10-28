@@ -51,3 +51,9 @@ folder (e.g, `<vault>/.obsidian/plugins/sliding-panes-obsidian/`)
 Alternately, you can clone the repo directly into your plugins folder and once
 dependencies are installed use `npm run dev` to start compilation in watch mode.  
 You may have to reload obsidian (`ctrl+R`) to see changes.
+
+## Pricing
+Huh? This is an open-source plugin I made *for fun*. It's completely free.
+However, if you absolutely *have* to send me money because you like it that
+much, feel free to throw some coins in my hat via
+[PayPal](https://paypal.me/deathau)
