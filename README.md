@@ -41,6 +41,7 @@ From Obsidian v0.9.8, you can activate this plugin within Obsidian by doing the 
 - Click Browse community plugins
 - Search for "Sliding Panes"
 - Click Install
+- Once installed, close the community plugins window and activate the newly installed plugin
 #### Updates
 You can follow the same procedure to update the plugin
 
