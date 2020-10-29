@@ -1,19 +1,50 @@
-# Sliding Panes (Andy Matuschak Mode) Obsidian Plugin
+## Sliding Panes (Andy Matuschak Mode) Obsidian Plugin
 Sliding Panes (Andy Matuschak Mode) as a plugin for [Obsidian](https://obsidian.md).
 
-This project uses Typescript to provide type checking and documentation.  
-The repo depends on the latest [plugin API](https://github.com/obsidianmd/obsidian-api) in Typescript Definition format, which contains TSDoc comments describing what it does.
+This plugin changes the way panes in the main workspace are handled — inspired by
+the UI of [Andy Matuschak's notes](https://notes.andymatuschak.org/).  
+Instead of shrinking the workspace to fit panels, the panels will remain a fixed
+width and stack so you can scroll between them. Note headers are rotated and added
+to the left of the pane like a spine, and will stack up as you scroll, allowing
+easy navigation between them.
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+### Other Features
+- Note headers stack up on the right _as well as_ the left.
+- Changing an active pane scrolls that pane into view.
+- Togglable without having to copy CSS into your theme.
 
-## Compatibility
+### Settings
+There is a setting to enable or disable the sliding panes effect, which is also
+registered as a command, so you can toggle it from the command pallette or
+assign a hotkey in the settings.
+
+There are also two settings for heading width (the width of the rotated header)
+and the leaf width (the width of a single markdown page).
+
+### Compatibility
 
 Custom plugins are only available for Obsidian v0.9.7+.
 
 The current API of this repo targets Obsidian **v0.9.7**. 
 
-## How to install the plugin
+### Notes
+This is all very expermental at the moment, so parts might not work, etc.  
+It still gets a bit slow if you're loading a lot of documents, so try not to
+load too many at once.
 
+## Installation
+
+### From within Obsidian
+From Obsidian v0.9.8, you can activate this plugin within Obsidian by doing the following:
+- Open Settings > Third-party plugin
+- Make sure Safe mode is **off**
+- Click Browse community plugins
+- Search for "Sliding Panes"
+- Click Install
+#### Updates
+You can follow the same procedure to update the plugin
+
+### From GitHub
 - Download the [Latest release](https://github.com/deathau/sliding-panes-obsidian/releases/latest)
 - Extract the `sliding-panes-obsidian` folder from the zip to your vault's plugins folder: `<vault>/.obsidian/plugins/`  
 Note: On some machines the `.obsidian` folder may be hidden. On MacOS you should be able to press `Command+Shift+Dot` to show the folder in Finder.
@@ -22,23 +53,13 @@ Note: On some machines the `.obsidian` folder may be hidden. On MacOS you should
 Otherwise head to Settings, third-party plugins, make sure safe mode is off and
 enable Sliding Panes from there.
 
-## New Features (vs the CSS-only version)
-- Note headers stack up on the right _as well as_ the left.
-- Changing an active pane scrolls that pane into view.
-- Togglable without having to copy CSS into your theme.
-
-## Settings
-There is a setting to enable or disable the sliding panes effect, which is also
-registered as a command, so you can toggle it from the command pallette or
-assign a hotkey in the settings.
-
-There are also two settings for heading width (the width of the rotated header) and the leaf width (the width of a single markdown page).
-
-## Notes
-This is all very expermental at the moment, so parts might not work, etc.  
-It still gets a bit slow if you're loading a lot of documents, so try not to load too many at once.
-
 ## Development
+
+This project uses Typescript to provide type checking and documentation.  
+The repo depends on the latest [plugin API](https://github.com/obsidianmd/obsidian-api) in Typescript Definition format, which contains TSDoc comments describing what it does.
+
+**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+
 If you want to contribute to development and/or just customize it with your own
 tweaks, you can do the following:
 - Clone this repo.
@@ -56,4 +77,5 @@ You may have to reload obsidian (`ctrl+R`) to see changes.
 Huh? This is an open-source plugin I made *for fun*. It's completely free.
 However, if you absolutely *have* to send me money because you like it that
 much, feel free to throw some coins in my hat via
-[PayPal](https://paypal.me/deathau)
+[PayPal](https://paypal.me/deathau) or sponsor me via
+[GitHub Sponsors](https://github.com/sponsors/deathau)
