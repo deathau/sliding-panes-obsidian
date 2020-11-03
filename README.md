@@ -1,7 +1,7 @@
 # Sliding Panes (Andy Matuschak Mode) Obsidian Plugin
 Sliding Panes (Andy Matuschak Mode) as a plugin for [Obsidian](https://obsidian.md).
 
-![Screenshot](https://github.com/deathau/sliding-panes-obsidian/raw/main/screenshot.png)
+![Screenshot](https://github.com/deathau/sliding-panes-obsidian/raw/master/screenshot.gif)
 
 This plugin changes the way panes in the main workspace are handled — inspired by
 the UI of [Andy Matuschak's notes](https://notes.andymatuschak.org/).  
