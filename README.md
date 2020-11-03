@@ -1,5 +1,7 @@
-## Sliding Panes (Andy Matuschak Mode) Obsidian Plugin
+# Sliding Panes (Andy Matuschak Mode) Obsidian Plugin
 Sliding Panes (Andy Matuschak Mode) as a plugin for [Obsidian](https://obsidian.md).
+
+![Screenshot](https://github.com/deathau/sliding-panes-obsidian/raw/main/screenshot.png)
 
 This plugin changes the way panes in the main workspace are handled — inspired by
 the UI of [Andy Matuschak's notes](https://notes.andymatuschak.org/).  
@@ -28,7 +30,8 @@ Custom plugins are only available for Obsidian v0.9.7+.
 The current API of this repo targets Obsidian **v0.9.7**. 
 
 ### Notes
-This is all very expermental at the moment, so parts might not work, etc.  
+This is all very expermental at the moment, so parts might not work, etc.
+
 It still gets a bit slow if you're loading a lot of documents, so try not to
 load too many at once.
 
@@ -80,3 +83,13 @@ However, if you absolutely *have* to send me money because you like it that
 much, feel free to throw some coins in my hat via
 [PayPal](https://paypal.me/deathau) or sponsor me via
 [GitHub Sponsors](https://github.com/sponsors/deathau)
+
+# Version History
+## v3.0.1
+- Quick fix to prevent the plugin from affecting sidebars
+
+## v3.0.0
+### New Features (vs the CSS-only version)
+- Note headers stack up on the right as well as the left.
+- Changing active pane scrolls that pane into view.
+- Togglable without having to copy CSS into your theme.
