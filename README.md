@@ -10,6 +10,8 @@ width and stack so you can scroll between them. Note headers are rotated and add
 to the left of the pane like a spine, and will stack up as you scroll, allowing
 easy navigation between them.
 
+(Note: To open links in a new pane in Obsidian, ctrl/cmd click them)
+
 ### Other Features
 - Note headers stack up on the right _as well as_ the left.
 - Changing an active pane scrolls that pane into view.
