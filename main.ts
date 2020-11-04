@@ -115,7 +115,6 @@ export default class SlidingPanesPlugin extends Plugin {
   }
 
   handleFileOpen = (e: any): void => {
-    console.log('handling file open');
     this.activateAdjacentLeafIfClosed(e);
     this.focusLeaf(e);
   };
