@@ -2,8 +2,10 @@ import './styles.scss'
 import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 export default class SlidingPanesPlugin extends Plugin {
-
   settings: SlidingPanesSettings;
+
+	private leavesOpenCount: number = 0;
+	private activeLeafIndex: number = 0;
 
   async onInit() {
 
@@ -44,7 +46,7 @@ export default class SlidingPanesPlugin extends Plugin {
       this.app.workspace.on('layout-ready', this.layoutReady);
     }
     this.app.workspace.on('resize', this.recalculateLeaves);
-    this.app.workspace.on('file-open', this.focusLeaf);
+    this.app.workspace.on('file-open', this.handleFileOpen);
   }
 
   disable = () => {
@@ -61,7 +63,7 @@ export default class SlidingPanesPlugin extends Plugin {
     });
 
     this.app.workspace.off('resize', this.recalculateLeaves);
-    this.app.workspace.off('file-open', this.focusLeaf);
+    this.app.workspace.off('file-open', this.handleFileOpen);
   }
 
   layoutReady = () => {
@@ -106,7 +108,37 @@ export default class SlidingPanesPlugin extends Plugin {
       leaf.style.position = "sticky";
       leaf.style.left = (i * this.settings.headerWidth) + "px";
       leaf.style.right = (((leafCount - i - 1) * this.settings.headerWidth) - this.settings.leafWidth) + "px";
+
+			leaf.dataset.slidingPanesIndex = i;
+			leaf.dataset.slidingPanesCount = leafCount;
     });
+  }
+
+  handleFileOpen = (e: any): void => {
+    console.log('handling file open');
+    this.activateAdjacentLeafIfClosed(e);
+    this.focusLeaf(e);
+  };
+
+  activateAdjacentLeafIfClosed = (e: any): void => {
+		const workspaceEl = (this.app.workspace.rootSplit as any).containerEl;
+		const leaves = workspaceEl.querySelectorAll(":scope>div");
+    const leafCount = leaves.length;
+
+		if (leafCount < this.leavesOpenCount) {
+			let isActiveLeafSet: boolean = false;
+			this.app.workspace.iterateRootLeaves((leaf: any) => {
+				const index = parseInt(leaf.containerEl.dataset.slidingPanesIndex);
+				if (!isActiveLeafSet && (index === this.activeLeafIndex - 1 || index == this.activeLeafIndex + 1)) {
+					(this.app.workspace as any).setActiveLeaf(leaf);
+          isActiveLeafSet = true;
+				}
+			})
+    }
+
+		this.leavesOpenCount = leafCount;
+		this.recalculateLeaves();
+    this.activeLeafIndex = parseInt((this.app.workspace.activeLeaf as any).containerEl.dataset.slidingPanesIndex);
   }
 
   focusLeaf = (e: any) => {
