@@ -116,8 +116,12 @@ export default class SlidingPanesPlugin extends Plugin {
   }
 
   handleFileOpen = (e: any): void => {
-    this.activateAdjacentLeafIfClosed(e);
-    this.focusLeaf(e);
+    // put a small timeout on it because when a file is opened on the far right 
+    // it wasn't focussing properly. The timeout fixes this
+    setTimeout(() => {
+      this.activateAdjacentLeafIfClosed(e);
+      this.focusLeaf(e)
+    }, 10);
   };
 
   activateAdjacentLeafIfClosed = (e: any): void => {
@@ -158,12 +162,16 @@ export default class SlidingPanesPlugin extends Plugin {
 
       const rootEl = rootSplit.containerEl;
       const headersToRightWidth = (leafCount - leafNumber - 1) * this.settings.headerWidth;
+      console.log("rootEl.scrollLeft > position", rootEl.scrollLeft, position);
       if (rootEl.scrollLeft > position) { // it's too far left
+        console.log("scrollTo", position - left)
         rootEl.scrollTo({ left: position - left, top: 0, behavior: 'smooth' });
       } else if (rootEl.scrollLeft + rootEl.clientWidth < position + leaf.containerEl.clientWidth + headersToRightWidth) { // it's too far right
         const numVisibleLeaves = (rootEl.clientWidth - (leafCount * this.settings.headerWidth)) / this.settings.leafWidth;
         const otherVisibleLeavesWidth = this.settings.leafWidth * Math.max(0, numVisibleLeaves - 1);
         const headersToLeftWidth = this.settings.headerWidth * leafNumber;
+        console.log("scrollTo", position - otherVisibleLeavesWidth - headersToLeftWidth)
+
         rootEl.scrollTo({ left: position - otherVisibleLeavesWidth - headersToLeftWidth, top: 0, behavior: 'smooth' });
       }
     }
