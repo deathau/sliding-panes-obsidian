@@ -1,5 +1,5 @@
 import './styles.scss'
-import { App, FileView, Plugin, PluginSettingTab, Setting, TAbstractFile } from 'obsidian';
+import { App, FileView, Plugin, PluginSettingTab, Setting, TAbstractFile, WorkspaceLeaf } from 'obsidian';
 
 export default class SlidingPanesPlugin extends Plugin {
   settings: SlidingPanesSettings;
@@ -178,11 +178,15 @@ export default class SlidingPanesPlugin extends Plugin {
 
   handleDelete = (file: TAbstractFile) => {
     // close any leaves with the deleted file open
-    this.app.workspace.iterateRootLeaves((leaf: any) => {
+    // detaching a leaf while iterating messes with the iteration
+    const leavesToDetach: WorkspaceLeaf[] = [];
+    this.app.workspace.iterateRootLeaves((leaf: WorkspaceLeaf) => {
       if (leaf.view instanceof FileView && leaf.view.file == file) {
-        leaf.detach();
+        leavesToDetach.push(leaf);
       }
     });
+    leavesToDetach.forEach(leaf => leaf.detach());
+
   }
 }
 
