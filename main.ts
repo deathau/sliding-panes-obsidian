@@ -1,5 +1,5 @@
 import './styles.scss'
-import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, FileView, Plugin, PluginSettingTab, Setting, TAbstractFile } from 'obsidian';
 
 export default class SlidingPanesPlugin extends Plugin {
   settings: SlidingPanesSettings;
@@ -47,6 +47,7 @@ export default class SlidingPanesPlugin extends Plugin {
     }
     this.app.workspace.on('resize', this.recalculateLeaves);
     this.app.workspace.on('file-open', this.handleFileOpen);
+    this.app.vault.on('delete', this.handleDelete);
   }
 
   disable = () => {
@@ -64,6 +65,7 @@ export default class SlidingPanesPlugin extends Plugin {
 
     this.app.workspace.off('resize', this.recalculateLeaves);
     this.app.workspace.off('file-open', this.handleFileOpen);
+    this.app.vault.off('delete', this.handleDelete);
   }
 
   layoutReady = () => {
@@ -172,6 +174,15 @@ export default class SlidingPanesPlugin extends Plugin {
         rootEl.scrollTo({ left: position - otherVisibleLeavesWidth - headersToLeftWidth, top: 0, behavior: 'smooth' });
       }
     }
+  }
+
+  handleDelete = (file: TAbstractFile) => {
+    // close any leaves with the deleted file open
+    this.app.workspace.iterateRootLeaves((leaf: any) => {
+      if (leaf.view instanceof FileView && leaf.view.file == file) {
+        leaf.detach();
+      }
+    });
   }
 }
 
