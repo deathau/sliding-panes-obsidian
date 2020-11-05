@@ -230,7 +230,6 @@ class SlidingPanesSettingTab extends PluginSettingTab {
       .addText(text => text.setPlaceholder('Example: 32')
         .setValue((this.plugin.settings.headerWidth || '') + '')
         .onChange((value) => {
-          console.log('Header Width: ' + value);
           this.plugin.settings.headerWidth = parseInt(value.trim());
           this.plugin.saveData(this.plugin.settings);
           this.plugin.refresh();
@@ -242,7 +241,6 @@ class SlidingPanesSettingTab extends PluginSettingTab {
       .addText(text => text.setPlaceholder('Example: 700')
         .setValue((this.plugin.settings.leafWidth || '') + '')
         .onChange((value) => {
-          console.log('Leaf Width: ' + value);
           this.plugin.settings.leafWidth = parseInt(value.trim());
           this.plugin.saveData(this.plugin.settings);
           this.plugin.refresh();
