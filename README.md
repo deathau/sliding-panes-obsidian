@@ -1,4 +1,6 @@
 # Sliding Panes (Andy Matuschak Mode) Obsidian Plugin
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/deathau/sliding-panes-obsidian/Build%20obsidian%20plugin?logo=github&style=for-the-badge) [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/deathau/sliding-panes-obsidian?style=for-the-badge&sort=semver)](https://github.com/deathau/sliding-panes-obsidian/releases/latest)
+
 Sliding Panes (Andy Matuschak Mode) as a plugin for [Obsidian](https://obsidian.md).
 
 ![Screenshot](https://github.com/deathau/sliding-panes-obsidian/raw/master/screenshot.gif)
@@ -44,7 +46,7 @@ From Obsidian v0.9.8, you can activate this plugin within Obsidian by doing the 
 - Open Settings > Third-party plugin
 - Make sure Safe mode is **off**
 - Click Browse community plugins
-- Search for "Sliding Panes"
+- Search for "Sliding Panes" (or "andy mode" 😉)
 - Click Install
 - Once installed, close the community plugins window and activate the newly installed plugin
 #### Updates
@@ -87,6 +89,11 @@ much, feel free to throw some coins in my hat via
 [GitHub Sponsors](https://github.com/sponsors/deathau)
 
 # Version History
+## 3.0.2
+- Update focusLeaf to scroll just far enough to make a leaf fully visible if it's out of view to the right (thanks @erichalldev)
+- Activate adjacent leaf when active leaf is closed (thanks again, @erichalldev)
+- Close leaves which happen to have a file open that is deleted
+
 ## v3.0.1
 - Quick fix to prevent the plugin from affecting sidebars
 
