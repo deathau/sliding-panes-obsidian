@@ -90,6 +90,7 @@ much, feel free to throw some coins in my hat via
 
 # Version History
 ## 3.0.2
+- Add a setting to disable rotated headers
 - Update focusLeaf to scroll just far enough to make a leaf fully visible if it's out of view to the right (thanks @erichalldev)
 - Activate adjacent leaf when active leaf is closed (thanks again, @erichalldev)
 - Close leaves which happen to have a file open that is deleted
