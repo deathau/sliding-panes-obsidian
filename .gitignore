@@ -10,3 +10,4 @@ package-lock.json
 main.js
 styles.css
 *.js.map
+data.json

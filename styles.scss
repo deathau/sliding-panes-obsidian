@@ -1,10 +1,13 @@
 body.plugin-sliding-panes .mod-root {
-    /* first we'll add a bit of gap for the title to sit inside of */
+    /* first we'll add a bit of gap for the spines */
     .workspace-leaf-content {
         position: relative;
+    }
+}
+body.plugin-sliding-panes-rotate-header .mod-root {
+    .workspace-leaf-content {
         padding-left: var(--header-width);
     }
-
     /* this is where the magic happens */
     .view-header {
         writing-mode: vertical-lr;

@@ -87,6 +87,7 @@ export default class SlidingPanesPlugin extends Plugin {
     const el = document.getElementById('plugin-sliding-panes');
     if (el) el.remove();
     document.body.classList.remove('plugin-sliding-panes');
+    document.body.classList.remove('plugin-sliding-panes-rotate-header');
   }
 
   addStyle = () => {
@@ -98,6 +99,8 @@ export default class SlidingPanesPlugin extends Plugin {
 
     document.getElementsByTagName("head")[0].appendChild(css);
     document.body.classList.add('plugin-sliding-panes');
+    if (this.settings.rotateHeaders)
+      document.body.classList.add('plugin-sliding-panes-rotate-header');
   }
 
   recalculateLeaves = () => {
@@ -194,6 +197,7 @@ class SlidingPanesSettings {
   headerWidth: number = 32;
   leafWidth: number = 700;
   disabled: boolean = false;
+  rotateHeaders: boolean = true;
 }
 
 class SlidingPanesSettingTab extends PluginSettingTab {
@@ -223,25 +227,35 @@ class SlidingPanesSettingTab extends PluginSettingTab {
             this.plugin.enable();
           }
         }));
-
-    new Setting(containerEl)
-      .setName('Header Width')
-      .setDesc('The width of the rotated header')
-      .addText(text => text.setPlaceholder('Example: 32')
-        .setValue((this.plugin.settings.headerWidth || '') + '')
-        .onChange((value) => {
-          this.plugin.settings.headerWidth = parseInt(value.trim());
-          this.plugin.saveData(this.plugin.settings);
-          this.plugin.refresh();
-        }));
     
     new Setting(containerEl)
       .setName('Leaf Width')
-      .setDesc('The width of a single markdown pane')
+      .setDesc('The width of a single pane')
       .addText(text => text.setPlaceholder('Example: 700')
         .setValue((this.plugin.settings.leafWidth || '') + '')
         .onChange((value) => {
           this.plugin.settings.leafWidth = parseInt(value.trim());
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
+
+    new Setting(containerEl)
+      .setName("Toggle rotated headers")
+      .setDesc("Rotates headers to use as spines")
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.rotateHeaders)
+        .onChange((value) => {
+          this.plugin.settings.rotateHeaders = value;
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
+
+    new Setting(containerEl)
+      .setName('Spine Width')
+      .setDesc('The width of the rotated header (or gap) for stacking')
+      .addText(text => text.setPlaceholder('Example: 32')
+        .setValue((this.plugin.settings.headerWidth || '') + '')
+        .onChange((value) => {
+          this.plugin.settings.headerWidth = parseInt(value.trim());
           this.plugin.saveData(this.plugin.settings);
           this.plugin.refresh();
         }));
