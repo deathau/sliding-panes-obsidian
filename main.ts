@@ -221,7 +221,6 @@ export default class SlidingPanesPlugin extends Plugin {
       var previousTokens = lineTokens.filter((token: Token): boolean => token.start <= currentToken.start).reverse();
       const openBracketsToken = previousTokens.find((token: Token): boolean => token.string.contains('['));
 
-      // position the suggestion container to just underneath the end of the open brackets
       currentLinkPosition = { line: cursorPosition.line, ch: openBracketsToken.end };
     }
 
@@ -237,22 +236,11 @@ export default class SlidingPanesPlugin extends Plugin {
       scCoords.left -= scRight - appWidth;
     }
 
-    const verticalGap = 5;
-    scCoords.top += verticalGap;
-    const scBottom = scCoords.top + scNode.offsetHeight;
-
-    console.log({scBottom});
-    console.log({appHeight: appContainerEl.offsetHeight});
-    if (scBottom > appContainerEl.offsetHeight) {
-      const topOfLine = cmEditor.charCoords(cursorPosition, 'page').top; // using 'local' to take into account padding of the CodeMirror container
-      console.log({topOfLine});
-      scCoords.top = topOfLine - scNode.offsetHeight - verticalGap;
-    }
-
-    // set the coords
+    // set the left coord
+    // the top coord is set by Obsidian and is correct.
+    // it's also a pain to try to recalculate so I left it out.
 
     scNode.style.left = Math.max(scCoords.left, 0) + 'px';
-    scNode.style.top =  Math.max(scCoords.top, 0) + 'px';
   };
 }
 
