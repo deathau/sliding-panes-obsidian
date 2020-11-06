@@ -105,6 +105,7 @@ export default class SlidingPanesPlugin extends Plugin {
     if (el) el.remove();
     document.body.classList.remove('plugin-sliding-panes');
     document.body.classList.remove('plugin-sliding-panes-rotate-header');
+    document.body.classList.remove('plugin-sliding-panes-stacking');
   }
 
   // add the styling elements we need
@@ -124,11 +125,9 @@ export default class SlidingPanesPlugin extends Plugin {
   // update the styles (at the start, or as the result of a settings change)
   updateStyle = () => {
     // if we've got rotate headers on, add the class which enables it
-    if (this.settings.rotateHeaders)
-      document.body.classList.add('plugin-sliding-panes-rotate-header');
-    // otherwise, make sure we don't have it
-    else
-      document.body.classList.remove('plugin-sliding-panes-rotate-header');
+    document.body.classList.toggle('plugin-sliding-panes-rotate-header', this.settings.rotateHeaders);
+    // do the same for stacking
+    document.body.classList.toggle('plugin-sliding-panes-stacking', this.settings.stackingEnabled);
     
     // get the custom css element
     const el = document.getElementById('plugin-sliding-panes');
@@ -152,9 +151,13 @@ export default class SlidingPanesPlugin extends Plugin {
 
     // iterate through all the root-level leaves
     // keep the leaf as `any` to get the undocumented containerEl
-    this.rootSplitAny.children.forEach((leaf:any, i:number) => {
-      leaf.containerEl.style.left = (i * this.settings.headerWidth) + "px";
-      leaf.containerEl.style.right = (((leafCount - i - 1) * this.settings.headerWidth) - this.settings.leafWidth) + "px";
+    this.rootSplitAny.children.forEach((leaf: any, i: number) => {
+      leaf.containerEl.style.left = this.settings.stackingEnabled
+        ? (i * this.settings.headerWidth) + "px"
+        : null;
+      leaf.containerEl.style.right = this.settings.stackingEnabled
+        ? (((leafCount - i - 1) * this.settings.headerWidth) - this.settings.leafWidth) + "px"
+        : null;
       leaf.containerEl.style.flex = null;
       // keep track of the total width of all leaves
       totalWidth += leaf.containerEl.clientWidth;
@@ -227,11 +230,12 @@ export default class SlidingPanesPlugin extends Plugin {
       // get the total leaf count
       const leafCount = this.rootSplitAny.children.length;
       // get this leaf's left value
-      const left = parseInt(leaf.containerEl.style.left);
+      const left = parseInt(leaf.containerEl.style.left) || 0;
       // get the position of this leaf, also, so we can scroll to it
       const position = (leafNumber * this.settings.leafWidth) + left;
       // the amount of space to the right we need to leave for sticky headers
-      const headersToRightWidth = (leafCount - leafNumber - 1) * this.settings.headerWidth;
+      const headersToRightWidth = this.settings.stackingEnabled
+        ? (leafCount - leafNumber - 1) * this.settings.headerWidth : 0;
       // the root element we need to scroll
       const rootEl = this.rootSplitAny.containerEl;
 
@@ -271,6 +275,7 @@ class SlidingPanesSettings {
   leafWidth: number = 700;
   disabled: boolean = false;
   rotateHeaders: boolean = true;
+  stackingEnabled: boolean = true;
 }
 
 class SlidingPanesSettingTab extends PluginSettingTab {
@@ -318,6 +323,16 @@ class SlidingPanesSettingTab extends PluginSettingTab {
       .addToggle(toggle => toggle.setValue(this.plugin.settings.rotateHeaders)
         .onChange((value) => {
           this.plugin.settings.rotateHeaders = value;
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
+    
+    new Setting(containerEl)
+      .setName("Toggle stacking")
+      .setDesc("Panes will stack up to the left and right")
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.stackingEnabled)
+        .onChange((value) => {
+          this.plugin.settings.stackingEnabled = value;
           this.plugin.saveData(this.plugin.settings);
           this.plugin.refresh();
         }));
