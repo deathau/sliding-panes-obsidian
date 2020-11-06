@@ -221,6 +221,7 @@ export default class SlidingPanesPlugin extends Plugin {
       var previousTokens = lineTokens.filter((token: Token): boolean => token.start <= currentToken.start).reverse();
       const openBracketsToken = previousTokens.find((token: Token): boolean => token.string.contains('['));
 
+      // position the suggestion container to just underneath the end of the open brackets
       currentLinkPosition = { line: cursorPosition.line, ch: openBracketsToken.end };
     }
 
