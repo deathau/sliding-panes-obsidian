@@ -1,15 +1,13 @@
 import './styles.scss'
 import { App, FileView, Plugin, PluginSettingTab, Setting, TAbstractFile, WorkspaceLeaf } from 'obsidian';
+import { Editor, Position, Token } from 'codemirror';
 
 export default class SlidingPanesPlugin extends Plugin {
   settings: SlidingPanesSettings;
 
   private leavesOpenCount: number = 0;
   private activeLeafIndex: number = 0;
-
-  async onInit() {
-
-  }
+  private suggestionContainerObserver: MutationObserver;
 
   async onload() {
     this.settings = await this.loadData() || new SlidingPanesSettings();
@@ -32,6 +30,20 @@ export default class SlidingPanesPlugin extends Plugin {
         }
       }
     });
+
+    // observe the app-container for when the suggestion-container appears
+    this.suggestionContainerObserver = new MutationObserver((mutations: MutationRecord[]): void => {
+      mutations.forEach((mutation: MutationRecord): void => {
+        mutation.addedNodes.forEach((node: any): void => {
+          if (node.className === 'suggestion-container') {
+            this.positionSuggestionContainer(node);
+          }
+        });
+      });
+    });
+    const observerTarget: Node = (this.app as any).dom.appContainerEl;
+    const observerConfig: MutationObserverInit = { childList: true }
+    this.suggestionContainerObserver.observe(observerTarget, observerConfig);
   }
 
   onunload() {
@@ -66,6 +78,7 @@ export default class SlidingPanesPlugin extends Plugin {
     this.app.workspace.off('resize', this.recalculateLeaves);
     this.app.workspace.off('file-open', this.handleFileOpen);
     this.app.vault.off('delete', this.handleDelete);
+    this.suggestionContainerObserver.disconnect();
   }
 
   layoutReady = () => {
@@ -189,8 +202,58 @@ export default class SlidingPanesPlugin extends Plugin {
       }
     });
     leavesToDetach.forEach(leaf => leaf.detach());
+  };
 
-  }
+  positionSuggestionContainer = (scNode: any): void => {
+    const cmEditor = (this.app.workspace.activeLeaf.view as any).sourceMode.cmEditor as Editor;
+
+    // find the open bracket to the left of or at the cursor
+
+    const cursorPosition = cmEditor.getCursor();
+    var currentToken = cmEditor.getTokenAt(cmEditor.getCursor());
+
+    let currentLinkPosition: Position;
+
+    if (currentToken.string === '[]') { // there is no text within the double brackets yet
+      currentLinkPosition = cursorPosition;
+    } else { // there is text within the double brackets
+      var lineTokens = cmEditor.getLineTokens(cursorPosition.line);
+      var previousTokens = lineTokens.filter((token: Token): boolean => token.start <= currentToken.start).reverse();
+      const openBracketsToken = previousTokens.find((token: Token): boolean => token.string.contains('['));
+
+      // position the suggestion container to just underneath the end of the open brackets
+      currentLinkPosition = { line: cursorPosition.line, ch: openBracketsToken.end };
+    }
+
+    const scCoords = cmEditor.charCoords(currentLinkPosition);
+
+    // make sure it fits within the window
+
+    const appContainerEl = (this.app as any).dom.appContainerEl
+
+    const scRight = scCoords.left + scNode.offsetWidth;
+    const appWidth = appContainerEl.offsetWidth;
+    if (scRight > appWidth) {
+      scCoords.left -= scRight - appWidth;
+    }
+
+    const verticalGap = 5;
+    scCoords.top += verticalGap;
+    const scBottom = scCoords.top + scNode.offsetHeight;
+
+    console.log({scBottom});
+    console.log({appHeight: appContainerEl.offsetHeight});
+    if (scBottom > appContainerEl.offsetHeight) {
+      const topOfLine = cmEditor.charCoords(cursorPosition, 'page').top; // using 'local' to take into account padding of the CodeMirror container
+      console.log({topOfLine});
+      scCoords.top = topOfLine - scNode.offsetHeight - verticalGap;
+    }
+
+    // set the coords
+
+    scNode.style.left = Math.max(scCoords.left, 0) + 'px';
+    scNode.style.top =  Math.max(scCoords.top, 0) + 'px';
+  };
 }
 
 class SlidingPanesSettings {
