@@ -226,46 +226,37 @@ export default class SlidingPanesPlugin extends Plugin {
 
     if (leaf != null) {
       // get the index of the active leaf
-      const leafNumber = this.activeLeafIndex = this.rootSplitAny.children.findIndex((l:WorkspaceLeaf) => l == leaf);
+      // also, get the position of this leaf, so we can scroll to it
+      // as leaves are resizable, we have to iterate through all leaves to the
+      // left until we get to the active one and add all their widths together
+      let position = 0;
+      const leafNumber = this.activeLeafIndex = this.rootSplitAny.children.findIndex((l: any) => {
+        // this is the active one
+        if (l == leaf) return true;
+        else {
+          // this is before the active one, add the width
+          position += l.containerEl.clientWidth;
+          return false;
+        }
+      });
+
       // get the total leaf count
       const leafCount = this.rootSplitAny.children.length;
-      // get this leaf's left value
+      // get this leaf's left value (the amount of space to the left for sticky headers)
       const left = parseInt(leaf.containerEl.style.left) || 0;
-      // get the position of this leaf, also, so we can scroll to it
-      //! this is wrong, as leaves are resizable,
-      //! so we have to iterate through all leaves to the left until we get to the active one
-      //! and add all their widths together (then plus the left)
-      let position = left;// (leafNumber * this.settings.leafWidth) + left;
-      let activeFound = false;
-      this.rootSplitAny.children.forEach((l: any, i: number) => {
-        if (l == leaf) activeFound = true;
-        if (!activeFound) position += l.containerEl.clientWidth;
-      });
       // the amount of space to the right we need to leave for sticky headers
-      const headersToRightWidth = this.settings.stackingEnabled
-        ? (leafCount - leafNumber - 1) * this.settings.headerWidth : 0;
-      console.log(headersToRightWidth);
+      const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - leafNumber - 1) * this.settings.headerWidth : 0;
       // the root element we need to scroll
       const rootEl = this.rootSplitAny.containerEl;
 
       // it's too far left
-      if (rootEl.scrollLeft > position) {
+      if (rootEl.scrollLeft > position - left) {
         // scroll the left side of the pane into view
         rootEl.scrollTo({ left: position - left, top: 0, behavior: 'smooth' });
       }
       // it's too far right
       else if (rootEl.scrollLeft + rootEl.clientWidth < position + leaf.containerEl.clientWidth + headersToRightWidth) {
-        // if (this.settings.stackingEnabled) {
-        //   const numVisibleLeaves = (rootEl.clientWidth - (leafCount * this.settings.headerWidth)) / this.settings.leafWidth;
-        //   const otherVisibleLeavesWidth = this.settings.leafWidth * Math.max(0, numVisibleLeaves - 1);
-        const headersToLeftWidth = this.settings.stackingEnabled ? this.settings.headerWidth * (leafNumber-1) : 0;
-
-        //   rootEl.scrollTo({ left: position - otherVisibleLeavesWidth - headersToLeftWidth, top: 0, behavior: 'smooth' });
-        // }
-        // else {
-        //! something's still not right here.
-          rootEl.scrollTo({ left: position + leaf.containerEl.clientWidth - headersToLeftWidth - rootEl.clientWidth, top: 0, behavior: 'smooth' });
-        // }
+        rootEl.scrollTo({ left: position + leaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth, top: 0, behavior: 'smooth' });
       }
     }
   }
