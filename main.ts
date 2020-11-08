@@ -252,8 +252,8 @@ export default class SlidingPanesPlugin extends Plugin {
         // this is the active one
         if (leaf == activeLeaf) {
           this.activeLeafIndex = index;
-          // leaf.containerEl.classList.remove('mod-am-left-of-active');
-          // leaf.containerEl.classList.remove('mod-am-right-of-active');
+          leaf.containerEl.classList.remove('mod-am-left-of-active');
+          leaf.containerEl.classList.remove('mod-am-right-of-active');
         }
         else if(this.activeLeafIndex == -1 || index < this.activeLeafIndex) {
           // this is before the active one, add the width
