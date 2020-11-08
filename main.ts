@@ -1,5 +1,5 @@
 import './styles.scss'
-import { App, FileView, Plugin, PluginSettingTab, Setting, TAbstractFile, WorkspaceLeaf } from 'obsidian';
+import { App, FileView, Plugin, PluginSettingTab, Setting, TAbstractFile, TFile, WorkspaceLeaf } from 'obsidian';
 
 export default class SlidingPanesPlugin extends Plugin {
   settings: SlidingPanesSettings;
@@ -58,6 +58,16 @@ export default class SlidingPanesPlugin extends Plugin {
   reallyEnable = () => {
     // we don't need the event handler anymore
     this.app.workspace.off('layout-ready', this.reallyEnable);
+
+    const workspaceAny = this.app.workspace as any;
+    workspaceAny.on('quick-preview', (w: any) => console.log('quick-preview', w));
+    const oldfunc = workspaceAny.setActiveLeaf;
+    workspaceAny.setActiveLeaf = (leaf:WorkspaceLeaf, t:any) => {
+      console.log("setActiveLeaf: before:", this.rootSplitAny.containerEl.scrollLeft);
+      oldfunc.bind(workspaceAny, leaf, t)();
+      console.log("setActiveLeaf: after:", this.rootSplitAny.containerEl.scrollLeft);
+      //this.focusLeaf(leaf.view instanceof FileView ? leaf.view.file : null);
+    }
 
     // this is the main thing that allows the scrolling sideways to work
     this.rootSplitAny.containerEl.style.overflowX = "auto";
@@ -217,13 +227,13 @@ export default class SlidingPanesPlugin extends Plugin {
     }
   }
 
-  focusLeaf = (e: any) => {
+  focusLeaf = (file: TAbstractFile) => {
     // get back to the leaf which has been andy'd (`any` because parentSplit is undocumented)
-    let leaf:any = this.app.workspace.activeLeaf;
+    let leaf: any = this.app.workspace.activeLeaf;
     while (leaf != null && leaf.parentSplit != null && leaf.parentSplit != this.app.workspace.rootSplit) {
       leaf = leaf.parentSplit;
     }
-
+    
     if (leaf != null) {
       // get the index of the active leaf
       // also, get the position of this leaf, so we can scroll to it
@@ -239,7 +249,7 @@ export default class SlidingPanesPlugin extends Plugin {
           return false;
         }
       });
-
+      
       // get the total leaf count
       const leafCount = this.rootSplitAny.children.length;
       // get this leaf's left value (the amount of space to the left for sticky headers)
@@ -248,16 +258,23 @@ export default class SlidingPanesPlugin extends Plugin {
       const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - leafNumber - 1) * this.settings.headerWidth : 0;
       // the root element we need to scroll
       const rootEl = this.rootSplitAny.containerEl;
-
+      
+      console.log("current scroll:", rootEl.scrollLeft);
       // it's too far left
       if (rootEl.scrollLeft > position - left) {
         // scroll the left side of the pane into view
+        console.log("scrolling to:", position - left);
         rootEl.scrollTo({ left: position - left, top: 0, behavior: 'smooth' });
       }
       // it's too far right
       else if (rootEl.scrollLeft + rootEl.clientWidth < position + leaf.containerEl.clientWidth + headersToRightWidth) {
+        console.log("scrolling to:", position + leaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth)
         rootEl.scrollTo({ left: position + leaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth, top: 0, behavior: 'smooth' });
       }
+      else {
+        console.log("scrolling to: not scrolling");
+      }
+      console.log("--------------------")
     }
   }
 
