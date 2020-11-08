@@ -234,13 +234,13 @@ export default class SlidingPanesPlugin extends Plugin {
     }
   }
 
-  focusLeaf = (e: any) => {
+  focusLeaf = (file: TAbstractFile) => {
     // get back to the leaf which has been andy'd (`any` because parentSplit is undocumented)
-    let leaf:any = this.app.workspace.activeLeaf;
+    let leaf: any = this.app.workspace.activeLeaf;
     while (leaf != null && leaf.parentSplit != null && leaf.parentSplit != this.app.workspace.rootSplit) {
       leaf = leaf.parentSplit;
     }
-
+    
     if (leaf != null) {
       // get the index of the active leaf
       // also, get the position of this leaf, so we can scroll to it
@@ -256,7 +256,7 @@ export default class SlidingPanesPlugin extends Plugin {
           return false;
         }
       });
-
+      
       // get the total leaf count
       const leafCount = this.rootSplitAny.children.length;
       // get this leaf's left value (the amount of space to the left for sticky headers)
@@ -266,14 +266,20 @@ export default class SlidingPanesPlugin extends Plugin {
       // the root element we need to scroll
       const rootEl = this.rootSplitAny.containerEl;
 
+      // this is a "magic" buffer to bypass some internal scrolling logic so that
+      // this scrolling will remain animated
+      const rightBuffer = 45;
+      
       // it's too far left
       if (rootEl.scrollLeft > position - left) {
         // scroll the left side of the pane into view
         rootEl.scrollTo({ left: position - left, top: 0, behavior: 'smooth' });
       }
       // it's too far right
-      else if (rootEl.scrollLeft + rootEl.clientWidth < position + leaf.containerEl.clientWidth + headersToRightWidth) {
-        rootEl.scrollTo({ left: position + leaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth, top: 0, behavior: 'smooth' });
+      else if (rootEl.scrollLeft + rootEl.clientWidth < position + leaf.containerEl.clientWidth + headersToRightWidth + rightBuffer) {
+        // adding an extra 100 so that the next pane is at least *a little* visible
+        // This (hopefully) helps with scrolling animations (issue #17)
+        rootEl.scrollTo({ left: position + leaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth + rightBuffer, top: 0, behavior: 'smooth' });
       }
     }
   }
