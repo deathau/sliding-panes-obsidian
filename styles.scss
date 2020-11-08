@@ -6,6 +6,14 @@ body.plugin-sliding-panes .mod-root {
     .workspace-leaf-content {
         position: relative;
     }
+
+    // these two help with the scrolling issue (#17)
+    .mod-am-right-of-active .cm-s-obsidian>div:not([class]) {
+        left:-50% !important;
+    }
+    .mod-am-left-of-active .cm-s-obsidian>div:not([class]) {
+        left: 150% !important;
+    }
     
 }
 body.plugin-sliding-panes-stacking .mod-root>.workspace-leaf {

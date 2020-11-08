@@ -236,39 +236,46 @@ export default class SlidingPanesPlugin extends Plugin {
 
   focusLeaf = (file: TAbstractFile) => {
     // get back to the leaf which has been andy'd (`any` because parentSplit is undocumented)
-    let leaf: any = this.app.workspace.activeLeaf;
-    while (leaf != null && leaf.parentSplit != null && leaf.parentSplit != this.app.workspace.rootSplit) {
-      leaf = leaf.parentSplit;
+    let activeLeaf: any = this.app.workspace.activeLeaf;
+    while (activeLeaf != null && activeLeaf.parentSplit != null && activeLeaf.parentSplit != this.app.workspace.rootSplit) {
+      activeLeaf = activeLeaf.parentSplit;
     }
     
-    if (leaf != null) {
+    if (activeLeaf != null) {
       // get the index of the active leaf
       // also, get the position of this leaf, so we can scroll to it
       // as leaves are resizable, we have to iterate through all leaves to the
       // left until we get to the active one and add all their widths together
       let position = 0;
-      const leafNumber = this.activeLeafIndex = this.rootSplitAny.children.findIndex((l: any) => {
+      this.activeLeafIndex = -1;
+      this.rootSplitAny.children.forEach((leaf: any, index:number) => {
         // this is the active one
-        if (l == leaf) return true;
-        else {
+        if (leaf == activeLeaf) {
+          this.activeLeafIndex = index;
+          // leaf.containerEl.classList.remove('mod-am-left-of-active');
+          // leaf.containerEl.classList.remove('mod-am-right-of-active');
+        }
+        else if(this.activeLeafIndex == -1 || index < this.activeLeafIndex) {
           // this is before the active one, add the width
-          position += l.containerEl.clientWidth;
-          return false;
+          position += leaf.containerEl.clientWidth;
+          leaf.containerEl.classList.add('mod-am-left-of-active');
+          leaf.containerEl.classList.remove('mod-am-right-of-active');
+        }
+        else {
+          // this is right of the active one
+          leaf.containerEl.classList.remove('mod-am-left-of-active');
+          leaf.containerEl.classList.add('mod-am-right-of-active');
         }
       });
       
       // get the total leaf count
       const leafCount = this.rootSplitAny.children.length;
       // get this leaf's left value (the amount of space to the left for sticky headers)
-      const left = parseInt(leaf.containerEl.style.left) || 0;
+      const left = parseInt(activeLeaf.containerEl.style.left) || 0;
       // the amount of space to the right we need to leave for sticky headers
-      const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - leafNumber - 1) * this.settings.headerWidth : 0;
+      const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - this.activeLeafIndex - 1) * this.settings.headerWidth : 0;
       // the root element we need to scroll
       const rootEl = this.rootSplitAny.containerEl;
-
-      // this is a "magic" buffer to bypass some internal scrolling logic so that
-      // this scrolling will remain animated
-      const rightBuffer = 45;
       
       // it's too far left
       if (rootEl.scrollLeft > position - left) {
@@ -276,10 +283,9 @@ export default class SlidingPanesPlugin extends Plugin {
         rootEl.scrollTo({ left: position - left, top: 0, behavior: 'smooth' });
       }
       // it's too far right
-      else if (rootEl.scrollLeft + rootEl.clientWidth < position + leaf.containerEl.clientWidth + headersToRightWidth + rightBuffer) {
-        // adding an extra 100 so that the next pane is at least *a little* visible
-        // This (hopefully) helps with scrolling animations (issue #17)
-        rootEl.scrollTo({ left: position + leaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth + rightBuffer, top: 0, behavior: 'smooth' });
+      else if (rootEl.scrollLeft + rootEl.clientWidth < position + activeLeaf.containerEl.clientWidth + headersToRightWidth) {
+        // scroll the right side of the pane into view
+        rootEl.scrollTo({ left: position + activeLeaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth, top: 0, behavior: 'smooth' });
       }
     }
   }
