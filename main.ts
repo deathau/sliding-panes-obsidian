@@ -59,16 +59,6 @@ export default class SlidingPanesPlugin extends Plugin {
     // we don't need the event handler anymore
     this.app.workspace.off('layout-ready', this.reallyEnable);
 
-    const workspaceAny = this.app.workspace as any;
-    workspaceAny.on('quick-preview', (w: any) => console.log('quick-preview', w));
-    const oldfunc = workspaceAny.setActiveLeaf;
-    workspaceAny.setActiveLeaf = (leaf:WorkspaceLeaf, t:any) => {
-      console.log("setActiveLeaf: before:", this.rootSplitAny.containerEl.scrollLeft);
-      oldfunc.bind(workspaceAny, leaf, t)();
-      console.log("setActiveLeaf: after:", this.rootSplitAny.containerEl.scrollLeft);
-      //this.focusLeaf(leaf.view instanceof FileView ? leaf.view.file : null);
-    }
-
     // this is the main thing that allows the scrolling sideways to work
     this.rootSplitAny.containerEl.style.overflowX = "auto";
 
@@ -263,24 +253,17 @@ export default class SlidingPanesPlugin extends Plugin {
       // this scrolling will remain animated
       const rightBuffer = 45;
       
-      console.log("current scroll:", rootEl.scrollLeft);
       // it's too far left
       if (rootEl.scrollLeft > position - left) {
         // scroll the left side of the pane into view
-        console.log("scrolling to:", position - left);
         rootEl.scrollTo({ left: position - left, top: 0, behavior: 'smooth' });
       }
       // it's too far right
       else if (rootEl.scrollLeft + rootEl.clientWidth < position + leaf.containerEl.clientWidth + headersToRightWidth + rightBuffer) {
-        console.log("scrolling to:", position + leaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth + rightBuffer)
         // adding an extra 100 so that the next pane is at least *a little* visible
         // This (hopefully) helps with scrolling animations (issue #17)
         rootEl.scrollTo({ left: position + leaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth + rightBuffer, top: 0, behavior: 'smooth' });
       }
-      else {
-        console.log("scrolling to: not scrolling");
-      }
-      console.log("--------------------")
     }
   }
 
