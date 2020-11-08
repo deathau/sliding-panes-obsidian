@@ -1,4 +1,6 @@
 body.plugin-sliding-panes .mod-root {
+    overflow: auto;
+    
     &>.workspace-leaf {
         display: block;
         flex: none;

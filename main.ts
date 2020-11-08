@@ -75,9 +75,6 @@ export default class SlidingPanesPlugin extends Plugin {
     // we don't need the event handler anymore
     this.app.workspace.off('layout-ready', this.reallyEnable);
 
-    // this is the main thing that allows the scrolling sideways to work
-    this.rootSplitAny.containerEl.style.overflowX = "auto";
-
     // add some extra classes that can't fit in the styles.css
     // because they use settings
     this.addStyle();
@@ -88,8 +85,6 @@ export default class SlidingPanesPlugin extends Plugin {
 
   // shut down andy mode
   disable = () => {
-    // undo our overflowX trick (bye bye sliding panes)
-    this.rootSplitAny.containerEl.style.overflowX = null;
 
     // get rid of the extra style tag we added
     this.removeStyle();
