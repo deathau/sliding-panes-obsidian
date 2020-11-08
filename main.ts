@@ -5,29 +5,37 @@ import { Editor, Position, Token } from 'codemirror';
 export default class SlidingPanesPlugin extends Plugin {
   settings: SlidingPanesSettings;
 
+  // helper variables
   private leavesOpenCount: number = 0;
   private activeLeafIndex: number = 0;
   private suggestionContainerObserver: MutationObserver;
 
+  // helper gets for any casts (for undocumented API stuff)
+  private get rootSplitAny(): any { return this.app.workspace.rootSplit; }
+
+  // when the plugin is loaded
   async onload() {
+    // load settings
     this.settings = await this.loadData() || new SlidingPanesSettings();
 
+    // if it's not disabled in the settings, enable it
     if (!this.settings.disabled) {
       this.enable();
     }
+
+    // add the settings tab
     this.addSettingTab(new SlidingPanesSettingTab(this.app, this));
+    // add the toggle on/off command
     this.addCommand({
       id: 'toggle-sliding-panes',
       name: 'Toggle Sliding Panes',
       callback: () => {
+        // switch the disabled setting and save
         this.settings.disabled = !this.settings.disabled;
         this.saveData(this.settings);
-        if (this.settings.disabled) {
-          this.disable();
-        }
-        else {
-          this.enable();
-        }
+
+        // disable or enable as necessary
+        this.settings.disabled ? this.disable() : this.enable();
       }
     });
 
@@ -46,152 +54,231 @@ export default class SlidingPanesPlugin extends Plugin {
     this.suggestionContainerObserver.observe(observerTarget, observerConfig);
   }
 
+  // on unload, perform the same steps as disable
   onunload() {
     this.disable();
   }
 
+  // enable andy mode
   enable = () => {
-    if ((this.app.workspace as any).layoutReady) {
-      this.layoutReady();
-    }
-    else {
-      this.app.workspace.on('layout-ready', this.layoutReady);
-    }
+    // add the event handlers
     this.app.workspace.on('resize', this.recalculateLeaves);
     this.app.workspace.on('file-open', this.handleFileOpen);
     this.app.vault.on('delete', this.handleDelete);
+
+    // wait for layout to be ready to perform the rest
+    (this.app.workspace as any).layoutReady ? this.reallyEnable() : this.app.workspace.on('layout-ready', this.reallyEnable);
   }
 
+  // really enable things (once the layout is ready)
+  reallyEnable = () => {
+    // we don't need the event handler anymore
+    this.app.workspace.off('layout-ready', this.reallyEnable);
+
+    // this is the main thing that allows the scrolling sideways to work
+    this.rootSplitAny.containerEl.style.overflowX = "auto";
+
+    // add some extra classes that can't fit in the styles.css
+    // because they use settings
+    this.addStyle();
+
+    // do all the calucations necessary for the workspace leaves
+    this.recalculateLeaves();
+  }
+
+  // shut down andy mode
   disable = () => {
+    // undo our overflowX trick (bye bye sliding panes)
+    this.rootSplitAny.containerEl.style.overflowX = null;
+
+    // get rid of the extra style tag we added
     this.removeStyle();
-    const workspaceEl = (this.app.workspace as any).rootSplit.containerEl;
-    workspaceEl.style.overflowX = null;
-    const leaves = workspaceEl.querySelectorAll(":scope>div");
-    leaves.forEach((leaf: any, i: number) => {
-      leaf.style.minWidth = null;
-      leaf.style.boxShadow = null;
-      leaf.style.position = null;
-      leaf.style.left = null;
-      leaf.style.right = null;
+
+    // iterate through the root leaves to remove the stuff we added
+    this.app.workspace.iterateRootLeaves((leaf: any) => {
+      leaf.containerEl.style.width = null;
+      leaf.containerEl.style.left = null;
+      leaf.containerEl.style.right = null;
     });
 
+    // get rid of our event handlers
     this.app.workspace.off('resize', this.recalculateLeaves);
     this.app.workspace.off('file-open', this.handleFileOpen);
     this.app.vault.off('delete', this.handleDelete);
     this.suggestionContainerObserver.disconnect();
   }
 
-  layoutReady = () => {
-    (this.app.workspace as any).rootSplit.containerEl.style.overflowX = "auto";
-
-    this.addStyle();
-
-    this.app.workspace.off('layout-ready', this.layoutReady);
-    this.recalculateLeaves();
-  }
-
+  // refresh funcion for when we change settings
   refresh = () => {
-    this.removeStyle();
-    this.addStyle();
+    // re-load the style
+    this.updateStyle()
+    // recalculate leaf positions
     this.recalculateLeaves();
   }
 
+  // remove the stlying elements we've created
   removeStyle = () => {
     const el = document.getElementById('plugin-sliding-panes');
     if (el) el.remove();
     document.body.classList.remove('plugin-sliding-panes');
     document.body.classList.remove('plugin-sliding-panes-rotate-header');
+    document.body.classList.remove('plugin-sliding-panes-stacking');
   }
 
+  // add the styling elements we need
   addStyle = () => {
+    // add a css block for our settings-dependent styles
     const css = document.createElement('style');
     css.id = 'plugin-sliding-panes';
-    css.appendChild(document.createTextNode(`
-      body.plugin-sliding-panes{--header-width:${this.settings.headerWidth}px;}
-    `));
-
     document.getElementsByTagName("head")[0].appendChild(css);
+
+    // add the main class
     document.body.classList.add('plugin-sliding-panes');
-    if (this.settings.rotateHeaders)
-      document.body.classList.add('plugin-sliding-panes-rotate-header');
+
+    // update the style with the settings-dependent styles
+    this.updateStyle();
   }
 
+  // update the styles (at the start, or as the result of a settings change)
+  updateStyle = () => {
+    // if we've got rotate headers on, add the class which enables it
+    document.body.classList.toggle('plugin-sliding-panes-rotate-header', this.settings.rotateHeaders);
+    // do the same for stacking
+    document.body.classList.toggle('plugin-sliding-panes-stacking', this.settings.stackingEnabled);
+    
+    // get the custom css element
+    const el = document.getElementById('plugin-sliding-panes');
+    if (!el) throw "plugin-sliding-panes element not found!";
+    else {
+      // set the settings-dependent css
+      el.innerText = `
+        body.plugin-sliding-panes{--header-width:${this.settings.headerWidth}px;}
+        body.plugin-sliding-panes .mod-root>.workspace-leaf{
+          min-width:${this.settings.leafWidth + this.settings.headerWidth}px;
+        }
+      `;
+    }
+  }
+
+  // Recalculate the leaf sizing and positions
   recalculateLeaves = () => {
-    const workspaceEl = (this.app.workspace as any).rootSplit.containerEl;
-    const leaves = workspaceEl.querySelectorAll(":scope>div");
-    const leafCount = leaves.length;
-    leaves.forEach((leaf:any, i:number) => {
-      leaf.style.minWidth = (this.settings.leafWidth + this.settings.headerWidth) + "px";
-      leaf.style.boxShadow = "0px 0px 20px 20px rgba(0,0,0,0.25)";
-      leaf.style.position = "sticky";
-      leaf.style.left = (i * this.settings.headerWidth) + "px";
-      leaf.style.right = (((leafCount - i - 1) * this.settings.headerWidth) - this.settings.leafWidth) + "px";
+    // rootSplit.children is undocumented for now, but it's easier to use for what we're doing.
+    const leafCount = this.rootSplitAny.children.length;
+    let totalWidth = 0;
 
-      // for use in focusLeaf (and activateAdjacentLeafIfClosed)
-      leaf.dataset.index = i;
-      leaf.dataset.total = leafCount;
+    // iterate through all the root-level leaves
+    // keep the leaf as `any` to get the undocumented containerEl
+    this.rootSplitAny.children.forEach((leaf: any, i: number) => {
+      leaf.containerEl.style.left = this.settings.stackingEnabled
+        ? (i * this.settings.headerWidth) + "px"
+        : null;
+      leaf.containerEl.style.right = this.settings.stackingEnabled
+        ? (((leafCount - i - 1) * this.settings.headerWidth) - this.settings.leafWidth) + "px"
+        : null;
+      leaf.containerEl.style.flex = null;
+      // keep track of the total width of all leaves
+      totalWidth += leaf.containerEl.clientWidth;
     });
+
+    // if the total width of all leaves is less than the width available,
+    // add back the flex class so they fill the space
+    if (totalWidth < this.rootSplitAny.containerEl.clientWidth) {
+      this.rootSplitAny.children.forEach((leaf: any) => {
+        leaf.containerEl.style.flex = '1 0 0';
+      });
+    }
   }
 
+  // this function is called, not only when a file opens, but when the active pane is switched
   handleFileOpen = (e: any): void => {
     // put a small timeout on it because when a file is opened on the far right 
     // it wasn't focussing properly. The timeout fixes this
     setTimeout(() => {
+      // check for a closed leaf and activate the adjacent leaf if it was
       this.activateAdjacentLeafIfClosed(e);
+      // focus on the newly selected leaf
       this.focusLeaf(e)
     }, 10);
   };
 
+  // check for a closed leaf and activate the adjacent leaf
   activateAdjacentLeafIfClosed = (e: any): void => {
-    const workspaceEl = (this.app.workspace.rootSplit as any).containerEl;
-    const leaves = workspaceEl.querySelectorAll(":scope>div");
-    const leafCount = leaves.length;
+    // first we need to figure out the count of open leaves
+    const leafCount = this.rootSplitAny.children.length;
 
-    if (leafCount < this.leavesOpenCount) {
-      let isActiveLeafSet: boolean = false;
-      this.app.workspace.iterateRootLeaves((leaf: any) => {
-        const index = parseInt(leaf.containerEl.dataset.index);
-        if (!isActiveLeafSet && (index === this.activeLeafIndex - 1 || index == this.activeLeafIndex + 1)) {
-          (this.app.workspace as any).setActiveLeaf(leaf);
-          isActiveLeafSet = true;
-        }
-      })
+    // use this value to check if we've set an active leaf yet
+    let isActiveLeafSet: boolean = false;
+
+    // if the number of open leaves has changed
+    if (leafCount != this.leavesOpenCount) {
+      // if the number of leaves is < our last saved value, we must have closed one (or more)
+      if (leafCount < this.leavesOpenCount) {
+        // iterate through the leaves
+        this.rootSplitAny.children.forEach((leaf: WorkspaceLeaf, i: number) => {
+          // if we haven't activated a leaf yet and this leaf is adjacent to the closed one
+          if (!isActiveLeafSet && (i >= this.activeLeafIndex - 1)) {
+            // set the active leaf (undocumented, hence `any`)
+            (this.app.workspace as any).setActiveLeaf(leaf);
+            isActiveLeafSet = true;
+            // set the index for next time, also.
+            this.activeLeafIndex = i;
+          }
+        });
+      }
+
+      // set the new open count
+      this.leavesOpenCount = leafCount;
+
+      // recalculate leaf positions
+      this.recalculateLeaves();
     }
-
-    this.leavesOpenCount = leafCount;
-    this.recalculateLeaves();
-    this.activeLeafIndex = parseInt((this.app.workspace.activeLeaf as any).containerEl.dataset.index);
   }
 
   focusLeaf = (e: any) => {
-    const rootSplit: any = (this.app.workspace as any).rootSplit;
-    // get back to the leaf which has been andy'd
+    // get back to the leaf which has been andy'd (`any` because parentSplit is undocumented)
     let leaf:any = this.app.workspace.activeLeaf;
-    while (leaf != null && leaf.parentSplit != null && leaf.parentSplit != rootSplit) {
+    while (leaf != null && leaf.parentSplit != null && leaf.parentSplit != this.app.workspace.rootSplit) {
       leaf = leaf.parentSplit;
     }
 
     if (leaf != null) {
-      // figure out which "number" leaf this is, and where we need to scroll to
-      const left = parseInt(leaf.containerEl.style.left);
-      const leafNumber = leaf.containerEl.dataset.index;
-      const leafCount = leaf.containerEl.dataset.total;
-      const position = (leafNumber * this.settings.leafWidth) + left;
+      // get the index of the active leaf
+      // also, get the position of this leaf, so we can scroll to it
+      // as leaves are resizable, we have to iterate through all leaves to the
+      // left until we get to the active one and add all their widths together
+      let position = 0;
+      const leafNumber = this.activeLeafIndex = this.rootSplitAny.children.findIndex((l: any) => {
+        // this is the active one
+        if (l == leaf) return true;
+        else {
+          // this is before the active one, add the width
+          position += l.containerEl.clientWidth;
+          return false;
+        }
+      });
 
-      const rootEl = rootSplit.containerEl;
-      const headersToRightWidth = (leafCount - leafNumber - 1) * this.settings.headerWidth;
-      if (rootEl.scrollLeft > position) { // it's too far left
+      // get the total leaf count
+      const leafCount = this.rootSplitAny.children.length;
+      // get this leaf's left value (the amount of space to the left for sticky headers)
+      const left = parseInt(leaf.containerEl.style.left) || 0;
+      // the amount of space to the right we need to leave for sticky headers
+      const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - leafNumber - 1) * this.settings.headerWidth : 0;
+      // the root element we need to scroll
+      const rootEl = this.rootSplitAny.containerEl;
+
+      // it's too far left
+      if (rootEl.scrollLeft > position - left) {
+        // scroll the left side of the pane into view
         rootEl.scrollTo({ left: position - left, top: 0, behavior: 'smooth' });
-      } else if (rootEl.scrollLeft + rootEl.clientWidth < position + leaf.containerEl.clientWidth + headersToRightWidth) { // it's too far right
-        const numVisibleLeaves = (rootEl.clientWidth - (leafCount * this.settings.headerWidth)) / this.settings.leafWidth;
-        const otherVisibleLeavesWidth = this.settings.leafWidth * Math.max(0, numVisibleLeaves - 1);
-        const headersToLeftWidth = this.settings.headerWidth * leafNumber;
-
-        rootEl.scrollTo({ left: position - otherVisibleLeavesWidth - headersToLeftWidth, top: 0, behavior: 'smooth' });
+      }
+      // it's too far right
+      else if (rootEl.scrollLeft + rootEl.clientWidth < position + leaf.containerEl.clientWidth + headersToRightWidth) {
+        rootEl.scrollTo({ left: position + leaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth, top: 0, behavior: 'smooth' });
       }
     }
   }
 
+  // hande when a file is deleted
   handleDelete = (file: TAbstractFile) => {
     // close any leaves with the deleted file open
     // detaching a leaf while iterating messes with the iteration
@@ -250,6 +337,7 @@ class SlidingPanesSettings {
   leafWidth: number = 700;
   disabled: boolean = false;
   rotateHeaders: boolean = true;
+  stackingEnabled: boolean = true;
 }
 
 class SlidingPanesSettingTab extends PluginSettingTab {
@@ -297,6 +385,16 @@ class SlidingPanesSettingTab extends PluginSettingTab {
       .addToggle(toggle => toggle.setValue(this.plugin.settings.rotateHeaders)
         .onChange((value) => {
           this.plugin.settings.rotateHeaders = value;
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
+    
+    new Setting(containerEl)
+      .setName("Toggle stacking")
+      .setDesc("Panes will stack up to the left and right")
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.stackingEnabled)
+        .onChange((value) => {
+          this.plugin.settings.stackingEnabled = value;
           this.plugin.saveData(this.plugin.settings);
           this.plugin.refresh();
         }));
