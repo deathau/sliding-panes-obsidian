@@ -258,6 +258,10 @@ export default class SlidingPanesPlugin extends Plugin {
       const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - leafNumber - 1) * this.settings.headerWidth : 0;
       // the root element we need to scroll
       const rootEl = this.rootSplitAny.containerEl;
+
+      // this is a "magic" buffer to bypass some internal scrolling logic so that
+      // this scrolling will remain animated
+      const rightBuffer = 45;
       
       console.log("current scroll:", rootEl.scrollLeft);
       // it's too far left
@@ -267,9 +271,11 @@ export default class SlidingPanesPlugin extends Plugin {
         rootEl.scrollTo({ left: position - left, top: 0, behavior: 'smooth' });
       }
       // it's too far right
-      else if (rootEl.scrollLeft + rootEl.clientWidth < position + leaf.containerEl.clientWidth + headersToRightWidth) {
-        console.log("scrolling to:", position + leaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth)
-        rootEl.scrollTo({ left: position + leaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth, top: 0, behavior: 'smooth' });
+      else if (rootEl.scrollLeft + rootEl.clientWidth < position + leaf.containerEl.clientWidth + headersToRightWidth + rightBuffer) {
+        console.log("scrolling to:", position + leaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth + rightBuffer)
+        // adding an extra 100 so that the next pane is at least *a little* visible
+        // This (hopefully) helps with scrolling animations (issue #17)
+        rootEl.scrollTo({ left: position + leaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth + rightBuffer, top: 0, behavior: 'smooth' });
       }
       else {
         console.log("scrolling to: not scrolling");
