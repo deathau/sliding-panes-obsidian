@@ -39,6 +39,30 @@ export default class SlidingPanesPlugin extends Plugin {
       }
     });
 
+    // add a command to toggle stacking
+    this.addCommand({
+      id: 'toggle-sliding-panes-stacking',
+      name: 'Toggle Stacking',
+      callback: () => {
+        // switch the setting, save and refresh
+        this.settings.stackingEnabled = !this.settings.stackingEnabled;
+        this.saveData(this.settings);
+        this.refresh();
+      }
+    });
+
+    // add a command to toggle rotated headers
+    this.addCommand({
+      id: 'toggle-sliding-panes-rotated-headers',
+      name: 'Toggle Rotated Headers',
+      callback: () => {
+        // switch the setting, save and refresh
+        this.settings.rotateHeaders = !this.settings.rotateHeaders;
+        this.saveData(this.settings);
+        this.refresh();
+      }
+    });
+
     // observe the app-container for when the suggestion-container appears
     this.suggestionContainerObserver = new MutationObserver((mutations: MutationRecord[]): void => {
       mutations.forEach((mutation: MutationRecord): void => {
