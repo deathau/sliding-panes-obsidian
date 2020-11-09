@@ -63,6 +63,18 @@ export default class SlidingPanesPlugin extends Plugin {
       }
     });
 
+    // add a command to toggle swapped header direction
+    this.addCommand({
+      id: 'toggle-sliding-panes-header-alt',
+      name: 'Swap rotated header direction',
+      callback: () => {
+        // switch the setting, save and refresh
+        this.settings.headerAlt = !this.settings.headerAlt;
+        this.saveData(this.settings);
+        this.refresh();
+      }
+    });
+
     // observe the app-container for when the suggestion-container appears
     this.suggestionContainerObserver = new MutationObserver((mutations: MutationRecord[]): void => {
       mutations.forEach((mutation: MutationRecord): void => {
@@ -148,6 +160,7 @@ export default class SlidingPanesPlugin extends Plugin {
     if (el) el.remove();
     document.body.classList.remove('plugin-sliding-panes');
     document.body.classList.remove('plugin-sliding-panes-rotate-header');
+    document.body.classList.remove('plugin-sliding-panes-header-alt');
     document.body.classList.remove('plugin-sliding-panes-stacking');
   }
 
@@ -169,6 +182,7 @@ export default class SlidingPanesPlugin extends Plugin {
   updateStyle = () => {
     // if we've got rotate headers on, add the class which enables it
     document.body.classList.toggle('plugin-sliding-panes-rotate-header', this.settings.rotateHeaders);
+    document.body.classList.toggle('plugin-sliding-panes-header-alt', this.settings.headerAlt)
     // do the same for stacking
     document.body.classList.toggle('plugin-sliding-panes-stacking', this.settings.stackingEnabled);
     
@@ -412,6 +426,7 @@ class SlidingPanesSettings {
   leafWidth: number = 700;
   disabled: boolean = false;
   rotateHeaders: boolean = true;
+  headerAlt: boolean = false;
   stackingEnabled: boolean = true;
 }
 
@@ -460,6 +475,16 @@ class SlidingPanesSettingTab extends PluginSettingTab {
       .addToggle(toggle => toggle.setValue(this.plugin.settings.rotateHeaders)
         .onChange((value) => {
           this.plugin.settings.rotateHeaders = value;
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
+
+    new Setting(containerEl)
+      .setName("Swap rotated header direction")
+      .setDesc("Swaps the direction of rotated headers")
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.headerAlt)
+        .onChange((value) => {
+          this.plugin.settings.headerAlt = value;
           this.plugin.saveData(this.plugin.settings);
           this.plugin.refresh();
         }));

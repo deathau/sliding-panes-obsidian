@@ -68,6 +68,11 @@ body.plugin-sliding-panes-rotate-header .workspace>.mod-root {
         background: linear-gradient(to bottom, transparent, var(--background-primary-alt));
     }
 
+    /* get rid of unnecessary padding */
+    .view-header-title {
+        padding-right: 0;
+    }
+
     /* swap the padding/margin around for the header and actions icons */
     .view-header-icon,
     .view-actions {
@@ -81,5 +86,12 @@ body.plugin-sliding-panes-rotate-header .workspace>.mod-root {
     /* get rid of the gap left by the now-missing horizontal title */
     .view-content {
         height: 100%;
+    }
+}
+body.plugin-sliding-panes-rotate-header.plugin-sliding-panes-header-alt .workspace>.mod-root {
+    .view-header-title {
+        transform: rotate(180deg);
+        text-align: right;
+        margin-top: 10px;
     }
 }
