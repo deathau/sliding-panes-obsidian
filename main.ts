@@ -352,11 +352,11 @@ export default class SlidingPanesPlugin extends Plugin {
     const cursorPosition = cmEditor.getCursor();
     var currentToken = cmEditor.getTokenAt(cmEditor.getCursor());
 
-    let currentLinkPosition: Position;
+    let scCursorPosition: Position;
 
     // there's no text yet
     if (currentToken.string === '[]' || currentToken.string === '#') { 
-      currentLinkPosition = cursorPosition;
+      scCursorPosition = cursorPosition;
     } 
     // there is text
     else {
@@ -369,14 +369,14 @@ export default class SlidingPanesPlugin extends Plugin {
 
       if (hashtagOrBracketsToken) {
         // position the suggestion container to just underneath the end of the open brackets
-        currentLinkPosition = { line: cursorPosition.line, ch: hashtagOrBracketsToken.end };
+        scCursorPosition = { line: cursorPosition.line, ch: hashtagOrBracketsToken.end };
       } else {
         // hashtagOrBracketsToken shouldn't be undefined, so this is just to be safe
-        currentLinkPosition = cursorPosition;
+        scCursorPosition = cursorPosition;
       }
     }
 
-    const scCoords = cmEditor.charCoords(currentLinkPosition);
+    const scCoords = cmEditor.charCoords(scCursorPosition);
 
     // make sure it fits within the window
 
