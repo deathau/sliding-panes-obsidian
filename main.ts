@@ -213,7 +213,7 @@ export default class SlidingPanesPlugin extends Plugin {
         ? (i * this.settings.headerWidth) + "px"
         : null;
       leaf.containerEl.style.right = this.settings.stackingEnabled
-        ? (((leafCount - i - 1) * this.settings.headerWidth) - leaf.containerEl.clientWidth) + "px"
+        ? (((leafCount - i) * this.settings.headerWidth) - leaf.containerEl.clientWidth) + "px"
         : null;
       leaf.containerEl.style.flex = null;
       // keep track of the total width of all leaves
@@ -313,7 +313,7 @@ export default class SlidingPanesPlugin extends Plugin {
       // get this leaf's left value (the amount of space to the left for sticky headers)
       const left = parseInt(activeLeaf.containerEl.style.left) || 0;
       // the amount of space to the right we need to leave for sticky headers
-      const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - this.activeLeafIndex - 2) * this.settings.headerWidth : 0;
+      const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - this.activeLeafIndex - 1) * this.settings.headerWidth : 0;
       // the root element we need to scroll
       const rootEl = this.rootSplitAny.containerEl;
       
