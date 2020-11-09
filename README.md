@@ -1,3 +1,4 @@
+# Sliding Panes (Andy Matuschak Mode) Obsidian Plugin
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/deathau/sliding-panes-obsidian?style=for-the-badge&sort=semver)](https://github.com/deathau/sliding-panes-obsidian/releases/latest)
 ![GitHub All Releases](https://img.shields.io/github/downloads/deathau/sliding-panes-obsidian/total?style=for-the-badge)
 
@@ -89,7 +90,6 @@ Alternately, you can clone the repo directly into your plugins folder and once
 dependencies are installed use `npm run dev` to start compilation in watch mode.  
 You may have to reload obsidian (`ctrl+R`) to see changes.
 
-## Pricing
 ## Pricing
 Huh? This is an open-source plugin I made *for fun*. It's completely free.
 However, if you absolutely *have* to send me money because you like it that
