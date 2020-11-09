@@ -99,6 +99,9 @@ much, feel free to throw some coins in my hat via the following:
 [![Paypal](https://img.shields.io/badge/paypal-deathau-yellow?style=social&logo=paypal)](https://paypal.me/deathau)
 
 # Version History
+## 3.1.1
+- Quick fix for rightmost header hiding and extra scrollbar
+
 ## 3.1.0
 - Update the link suggestion container position (thanks again, @erichalldev)
 - Add the option (and command palette command) to turn stacking off (i.e. slide-off mode, like the v1 of Andy's Mode CSS)
