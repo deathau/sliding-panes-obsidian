@@ -99,6 +99,10 @@ export default class SlidingPanesPlugin extends Plugin {
     // we don't need the event handler anymore
     this.app.workspace.off('layout-ready', this.reallyEnable);
 
+    // backup the function so I can restore it
+    this.rootSplitAny.oldOnChildResizeStart = this.rootSplitAny.onChildResizeStart;
+    this.rootSplitAny.onChildResizeStart = this.onChildResizeStart;
+
     // add some extra classes that can't fit in the styles.css
     // because they use settings
     this.addStyle();
@@ -119,6 +123,9 @@ export default class SlidingPanesPlugin extends Plugin {
       leaf.containerEl.style.left = null;
       leaf.containerEl.style.right = null;
     });
+
+    // restore the default functionality
+    this.rootSplitAny.onChildResizeStart = this.rootSplitAny.oldOnChildResizeStart;
 
     // get rid of our event handlers
     this.app.workspace.off('resize', this.recalculateLeaves);
@@ -173,7 +180,7 @@ export default class SlidingPanesPlugin extends Plugin {
       el.innerText = `
         body.plugin-sliding-panes{--header-width:${this.settings.headerWidth}px;}
         body.plugin-sliding-panes .mod-root>.workspace-leaf{
-          min-width:${this.settings.leafWidth + this.settings.headerWidth}px;
+          width:${this.settings.leafWidth + this.settings.headerWidth}px;
         }
       `;
     }
@@ -192,7 +199,7 @@ export default class SlidingPanesPlugin extends Plugin {
         ? (i * this.settings.headerWidth) + "px"
         : null;
       leaf.containerEl.style.right = this.settings.stackingEnabled
-        ? (((leafCount - i - 1) * this.settings.headerWidth) - this.settings.leafWidth) + "px"
+        ? (((leafCount - i - 1) * this.settings.headerWidth) - leaf.containerEl.clientWidth) + "px"
         : null;
       leaf.containerEl.style.flex = null;
       // keep track of the total width of all leaves
@@ -292,7 +299,7 @@ export default class SlidingPanesPlugin extends Plugin {
       // get this leaf's left value (the amount of space to the left for sticky headers)
       const left = parseInt(activeLeaf.containerEl.style.left) || 0;
       // the amount of space to the right we need to leave for sticky headers
-      const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - this.activeLeafIndex - 1) * this.settings.headerWidth : 0;
+      const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - this.activeLeafIndex - 2) * this.settings.headerWidth : 0;
       // the root element we need to scroll
       const rootEl = this.rootSplitAny.containerEl;
       
@@ -361,6 +368,43 @@ export default class SlidingPanesPlugin extends Plugin {
 
     scNode.style.left = Math.max(scCoords.left, 0) + 'px';
   };
+
+  // overriden function for rootSplit child resize
+  onChildResizeStart = (leaf: any, event: any) => {
+
+    // only really apply this to vertical splits
+    if (this.rootSplitAny.direction === "vertical") {
+      // this is the width the leaf started at before resize
+      const startWidth = leaf.containerEl.clientWidth;
+
+      // the mousemove event to trigger while resizing
+      const mousemove = (e: any) => {
+        // get the difference between the first position and current
+        const deltaX = e.pageX - event.pageX;
+        // adjust the start width by the delta
+        leaf.containerEl.style.width = `${startWidth + deltaX}px`;
+      }
+
+      // the mouseup event to trigger at the end of resizing
+      const mouseup = () => {
+        // if stacking is enabled, we need to re-jig the "right" value
+        if (this.settings.stackingEnabled) {
+          // we need the leaf count and index to calculate the correct value
+          const leafCount = this.rootSplitAny.children.length;
+          const leafIndex = this.rootSplitAny.children.findIndex((l: any) => l == leaf);
+          leaf.containerEl.style.right = (((leafCount - leafIndex - 1) * this.settings.headerWidth) - leaf.containerEl.clientWidth) + "px";
+        }
+
+        // remove these event listeners. We're done with them
+        document.removeEventListener("mousemove", mousemove);
+        document.removeEventListener("mouseup", mouseup);
+      }
+
+      // Add the above two event listeners
+      document.addEventListener("mousemove", mousemove);
+      document.addEventListener("mouseup", mouseup);
+    }
+  }
 }
 
 class SlidingPanesSettings {
