@@ -343,28 +343,40 @@ export default class SlidingPanesPlugin extends Plugin {
     leavesToDetach.forEach(leaf => leaf.detach());
   };
 
+  // position the suggestion container underneath the cursor for links and tags
   positionSuggestionContainer = (scNode: any): void => {
     const cmEditor = (this.app.workspace.activeLeaf.view as any).sourceMode.cmEditor as Editor;
 
-    // find the open bracket to the left of or at the cursor
+    // find the open bracket or hashtag to the left of or at the cursor
 
     const cursorPosition = cmEditor.getCursor();
     var currentToken = cmEditor.getTokenAt(cmEditor.getCursor());
 
-    let currentLinkPosition: Position;
+    let scCursorPosition: Position;
 
-    if (currentToken.string === '[]') { // there is no text within the double brackets yet
-      currentLinkPosition = cursorPosition;
-    } else { // there is text within the double brackets
+    // there's no text yet
+    if (currentToken.string === '[]' || currentToken.string === '#') { 
+      scCursorPosition = cursorPosition;
+    } 
+    // there is text
+    else {
+      // search the current line for the closest open bracket or a hashtag to the left
       var lineTokens = cmEditor.getLineTokens(cursorPosition.line);
       var previousTokens = lineTokens.filter((token: Token): boolean => token.start <= currentToken.start).reverse();
-      const openBracketsToken = previousTokens.find((token: Token): boolean => token.string.contains('['));
+      const hashtagOrBracketsToken = previousTokens.find(
+        (token: Token): boolean => token.string.contains('[') || token.string.contains('#')
+      );
 
-      // position the suggestion container to just underneath the end of the open brackets
-      currentLinkPosition = { line: cursorPosition.line, ch: openBracketsToken.end };
+      if (hashtagOrBracketsToken) {
+        // position the suggestion container to just underneath the end of the open brackets
+        scCursorPosition = { line: cursorPosition.line, ch: hashtagOrBracketsToken.end };
+      } else {
+        // hashtagOrBracketsToken shouldn't be undefined, so this is just to be safe
+        scCursorPosition = cursorPosition;
+      }
     }
 
-    const scCoords = cmEditor.charCoords(currentLinkPosition);
+    const scCoords = cmEditor.charCoords(scCursorPosition);
 
     // make sure it fits within the window
 
