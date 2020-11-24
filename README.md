@@ -23,6 +23,7 @@ easy navigation between them.
 
 ### Settings
 - **Toggle Sliding Panes** - Turns sliding panes on or off globally *(also available via command/hotkey)*
+- **Leaf Auto Width** - If on, the width of the pane should fill the available space *(also available via command/hotkey)*
 - **Leaf Width** - The default width of a single pane
 - **Toggle rotated headers** - Rotates headers to use as spines *(also available via command/hotkey)*
 - **Swap rotated header direction** - Swaps the direction of rotated headers  *(also available via command/hotkey)*
@@ -48,20 +49,20 @@ From Obsidian v0.9.8, you can activate this plugin within Obsidian by doing the 
 - Open Settings > Third-party plugin
 - Make sure Safe mode is **off**
 - Click Browse community plugins
-- Search for "Sliding Panes" (or "andy mode" 😉)
+- Search for this plugin
 - Click Install
 - Once installed, close the community plugins window and activate the newly installed plugin
 #### Updates
 You can follow the same procedure to update the plugin
 
 ### From GitHub
-- Download the [Latest release](https://github.com/deathau/sliding-panes-obsidian/releases/latest)
-- Extract the `sliding-panes-obsidian` folder from the zip to your vault's plugins folder: `<vault>/.obsidian/plugins/`  
+- Download the Latest Release from the Releases section of the GitHub Repository
+- Extract the plugin folder from the zip to your vault's plugins folder: `<vault>/.obsidian/plugins/`  
 Note: On some machines the `.obsidian` folder may be hidden. On MacOS you should be able to press `Command+Shift+Dot` to show the folder in Finder.
 - Reload Obsidian
 - If prompted about Safe Mode, you can disable safe mode and enable the plugin.
 Otherwise head to Settings, third-party plugins, make sure safe mode is off and
-enable Sliding Panes from there.
+enable the plugin from there.
 
 ## Security
 > Third-party plugins can access files on your computer, connect to the internet, and even install additional programs.
@@ -83,7 +84,7 @@ tweaks, you can do the following:
 - `npm i` or `yarn` to install dependencies
 - `npm run build` to compile.
 - Copy `manifest.json`, `main.js` and `styles.css` to a subfolder of your plugins
-folder (e.g, `<vault>/.obsidian/plugins/sliding-panes-obsidian/`)
+folder (e.g, `<vault>/.obsidian/plugins/<plugin-name>/`)
 - Reload obsidian to see changes
 
 Alternately, you can clone the repo directly into your plugins folder and once
@@ -99,6 +100,13 @@ much, feel free to throw some coins in my hat via the following:
 [![Paypal](https://img.shields.io/badge/paypal-deathau-yellow?style=social&logo=paypal)](https://paypal.me/deathau)
 
 # Version History
+## 3.2.0
+- Added an "auto width" mode, where each pane will take up the available space between the spines on the left and right
+- Fix suggestion container positioning for tags (and related console errors) - Thanks, yet again, Eric Hall
+- Fixed orientation of emojis in rotated headers (thanks GreenChocho and NothingIsLost)
+- Fixed an error when loading workspaces
+- Fixed compatibility issues with MrJackphi's Backlinks into the document plugin
+
 ## 3.1.1
 - Quick fix for rightmost header hiding and extra scrollbar
 
