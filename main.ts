@@ -242,35 +242,39 @@ export default class SlidingPanesPlugin extends Plugin {
   };
 
   // check for a closed leaf and activate the adjacent leaf
-  activateAdjacentLeafIfClosed = (e: any): void => {
-    // first we need to figure out the count of open leaves
-    const leafCount = this.rootSplitAny.children.length;
+  activateAdjacentLeafIfClosed = async (e: any) => {
+    // check that rootSplitAny is a thing first
+    // (it might not be if the workspace is reloading?)
+    if (this.rootSplitAny) {
+      // first we need to figure out the count of open leaves
+      const leafCount = this.rootSplitAny.children.length;
 
-    // use this value to check if we've set an active leaf yet
-    let isActiveLeafSet: boolean = false;
+      // use this value to check if we've set an active leaf yet
+      let isActiveLeafSet: boolean = false;
 
-    // if the number of open leaves has changed
-    if (leafCount != this.leavesOpenCount) {
-      // if the number of leaves is < our last saved value, we must have closed one (or more)
-      if (leafCount < this.leavesOpenCount) {
-        // iterate through the leaves
-        this.rootSplitAny.children.forEach((leaf: WorkspaceLeaf, i: number) => {
-          // if we haven't activated a leaf yet and this leaf is adjacent to the closed one
-          if (!isActiveLeafSet && (i >= this.activeLeafIndex - 1)) {
-            // set the active leaf (undocumented, hence `any`)
-            (this.app.workspace as any).setActiveLeaf(leaf);
-            isActiveLeafSet = true;
-            // set the index for next time, also.
-            this.activeLeafIndex = i;
-          }
-        });
+      // if the number of open leaves has changed
+      if (leafCount != this.leavesOpenCount) {
+        // if the number of leaves is < our last saved value, we must have closed one (or more)
+        if (leafCount < this.leavesOpenCount) {
+          // iterate through the leaves
+          this.rootSplitAny.children.forEach((leaf: WorkspaceLeaf, i: number) => {
+            // if we haven't activated a leaf yet and this leaf is adjacent to the closed one
+            if (!isActiveLeafSet && (i >= this.activeLeafIndex - 1)) {
+              // set the active leaf (undocumented, hence `any`)
+              (this.app.workspace as any).setActiveLeaf(leaf);
+              isActiveLeafSet = true;
+              // set the index for next time, also.
+              this.activeLeafIndex = i;
+            }
+          });
+        }
+
+        // set the new open count
+        this.leavesOpenCount = leafCount;
+
+        // recalculate leaf positions
+        this.recalculateLeaves();
       }
-
-      // set the new open count
-      this.leavesOpenCount = leafCount;
-
-      // recalculate leaf positions
-      this.recalculateLeaves();
     }
   }
 
@@ -281,7 +285,7 @@ export default class SlidingPanesPlugin extends Plugin {
       activeLeaf = activeLeaf.parentSplit;
     }
     
-    if (activeLeaf != null) {
+    if (activeLeaf != null && this.rootSplitAny) {
       // get the index of the active leaf
       // also, get the position of this leaf, so we can scroll to it
       // as leaves are resizable, we have to iterate through all leaves to the
