@@ -98,7 +98,7 @@ export default class SlidingPanesPlugin extends Plugin {
   // enable andy mode
   enable = () => {
     // add the event handlers
-    this.app.workspace.on('resize', this.recalculateLeaves);
+    this.app.workspace.on('resize', this.refresh);
     this.app.workspace.on('file-open', this.handleFileOpen);
     this.app.vault.on('delete', this.handleDelete);
 
