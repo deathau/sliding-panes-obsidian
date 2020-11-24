@@ -191,12 +191,14 @@ export default class SlidingPanesPlugin extends Plugin {
     if (!el) throw "plugin-sliding-panes element not found!";
     else {
       // set the settings-dependent css
-      el.innerText = `
-        body.plugin-sliding-panes{--header-width:${this.settings.headerWidth}px;}
-        body.plugin-sliding-panes .mod-root>.workspace-leaf{
-          width:${this.settings.leafWidth + this.settings.headerWidth}px;
-        }
-      `;
+      el.innerText = `body.plugin-sliding-panes{--header-width:${this.settings.headerWidth}px;}`;
+      if (!this.settings.leafAutoWidth) {
+        el.innerText += `
+          body.plugin-sliding-panes .mod-root>.workspace-leaf{
+            width:${this.settings.leafWidth + this.settings.headerWidth}px;
+          }
+        `;
+      }
     }
   }
 
@@ -209,13 +211,18 @@ export default class SlidingPanesPlugin extends Plugin {
     // iterate through all the root-level leaves
     // keep the leaf as `any` to get the undocumented containerEl
     this.rootSplitAny.children.forEach((leaf: any, i: number) => {
+
+      leaf.containerEl.style.flex = null;
+      if (this.settings.leafAutoWidth) {
+        leaf.containerEl.style.width = (this.rootSplitAny.containerEl.clientWidth - ((leafCount - 1) * this.settings.headerWidth)) + "px";
+      }
+
       leaf.containerEl.style.left = this.settings.stackingEnabled
         ? (i * this.settings.headerWidth) + "px"
         : null;
       leaf.containerEl.style.right = this.settings.stackingEnabled
         ? (((leafCount - i) * this.settings.headerWidth) - leaf.containerEl.clientWidth) + "px"
         : null;
-      leaf.containerEl.style.flex = null;
       // keep track of the total width of all leaves
       totalWidth += leaf.containerEl.clientWidth;
     });
@@ -227,6 +234,8 @@ export default class SlidingPanesPlugin extends Plugin {
         leaf.containerEl.style.flex = '1 0 0';
       });
     }
+
+    this.focusActiveLeaf(!this.settings.leafAutoWidth);
   }
 
   // this function is called, not only when a file opens, but when the active pane is switched
@@ -279,6 +288,10 @@ export default class SlidingPanesPlugin extends Plugin {
   }
 
   focusLeaf = (file: TAbstractFile) => {
+    this.focusActiveLeaf();
+  }
+
+  focusActiveLeaf(animated: boolean = true) {
     // get back to the leaf which has been andy'd (`any` because parentSplit is undocumented)
     let activeLeaf: any = this.app.workspace.activeLeaf;
     while (activeLeaf != null && activeLeaf.parentSplit != null && activeLeaf.parentSplit != this.app.workspace.rootSplit) {
@@ -324,12 +337,12 @@ export default class SlidingPanesPlugin extends Plugin {
       // it's too far left
       if (rootEl.scrollLeft > position - left) {
         // scroll the left side of the pane into view
-        rootEl.scrollTo({ left: position - left, top: 0, behavior: 'smooth' });
+        rootEl.scrollTo({ left: position - left, top: 0, behavior: animated ? 'smooth': 'auto' });
       }
       // it's too far right
       else if (rootEl.scrollLeft + rootEl.clientWidth < position + activeLeaf.containerEl.clientWidth + headersToRightWidth) {
         // scroll the right side of the pane into view
-        rootEl.scrollTo({ left: position + activeLeaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth, top: 0, behavior: 'smooth' });
+        rootEl.scrollTo({ left: position + activeLeaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth, top: 0, behavior: animated ? 'smooth': 'auto' });
       }
     }
   }
@@ -440,6 +453,7 @@ export default class SlidingPanesPlugin extends Plugin {
 class SlidingPanesSettings {
   headerWidth: number = 32;
   leafWidth: number = 700;
+  leafAutoWidth: boolean = false;
   disabled: boolean = false;
   rotateHeaders: boolean = true;
   headerAlt: boolean = false;
@@ -475,8 +489,18 @@ class SlidingPanesSettingTab extends PluginSettingTab {
         }));
     
     new Setting(containerEl)
+      .setName('Leaf Auto Width')
+      .setDesc('If on, the width of the pane should fill the available space')
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.leafAutoWidth)
+        .onChange((value) => {
+          this.plugin.settings.leafAutoWidth = value;
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
+    
+    new Setting(containerEl)
       .setName('Leaf Width')
-      .setDesc('The width of a single pane')
+      .setDesc('The width of a single pane (only if auto width is off)')
       .addText(text => text.setPlaceholder('Example: 700')
         .setValue((this.plugin.settings.leafWidth || '') + '')
         .onChange((value) => {
