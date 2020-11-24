@@ -1,35 +1,38 @@
-name: Build obsidian plugin
-
+name: Release Obsidian Plugin
 on:
   push:
     # Sequence of patterns matched against refs/tags
     tags:
     - '*' # Push events to matching any tag format, i.e. 1.0, 20.15.10
-
-env:
-  PLUGIN_NAME: sliding-panes-obsidian # Change this to the name of your plugin-id folder
-
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
     - name: Use Node.js
       uses: actions/setup-node@v1
       with:
         node-version: '14.x' # You might need to adjust this value to your own version
+    # Get the version number and put it in a variable
+    - name: Get Version
+      id: version
+      run: |
+        echo "::set-output name=tag::$(git describe --abbrev=0)"
+    # Build the plugin
     - name: Build
       id: build
-      run: | 
+      run: |
         npm install
         npm run build --if-present
-        mkdir ${{ env.PLUGIN_NAME }}
-        cp main.js manifest.json styles.css README.md ${{ env.PLUGIN_NAME }}
-        zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
-        ls
-        echo "::set-output name=tag_name::$(git tag --sort version:refname | tail -n 1)"
+    # Package the required files into a zip
+    - name: Package
+      run: |
+        mkdir ${{ github.event.repository.name }}
+        cp main.js manifest.json styles.css README.md ${{ github.event.repository.name }}
+        zip -r ${{ github.event.repository.name }}.zip ${{ github.event.repository.name }}
+    # Create the release on github
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -41,16 +44,18 @@ jobs:
         release_name: ${{ github.ref }}
         draft: false
         prerelease: false
+    # Upload the packaged release file
     - name: Upload zip file
       id: upload-zip
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} 
-        asset_path: ./${{ env.PLUGIN_NAME }}.zip 
-        asset_name: ${{ env.PLUGIN_NAME }}-${{ steps.build.outputs.tag_name }}.zip 
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./${{ github.event.repository.name }}.zip
+        asset_name: ${{ github.event.repository.name }}-${{ steps.version.outputs.tag }}.zip
         asset_content_type: application/zip
+    # Upload the main.js
     - name: Upload main.js
       id: upload-main
       uses: actions/upload-release-asset@v1
@@ -61,6 +66,7 @@ jobs:
         asset_path: ./main.js
         asset_name: main.js
         asset_content_type: text/javascript
+    # Upload the manifest.json
     - name: Upload manifest.json
       id: upload-manifest
       uses: actions/upload-release-asset@v1
@@ -71,6 +77,7 @@ jobs:
         asset_path: ./manifest.json
         asset_name: manifest.json
         asset_content_type: application/json
+    # Upload the style.css
     - name: Upload styles.css
       id: upload-css
       uses: actions/upload-release-asset@v1
@@ -81,3 +88,4 @@ jobs:
         asset_path: ./styles.css
         asset_name: styles.css
         asset_content_type: text/css
+    # TODO: release notes???
