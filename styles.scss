@@ -31,6 +31,7 @@ body.plugin-sliding-panes-rotate-header .workspace>.mod-root {
     /* this is where the magic happens */
     .view-header {
         writing-mode: vertical-lr;
+        text-orientation: sideways;
         border-right: 1px solid var(--background-secondary-alt);
         border-left: 2px solid var(--background-secondary-alt);
         border-top: none;
