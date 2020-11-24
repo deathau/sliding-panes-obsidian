@@ -5,10 +5,12 @@ body.plugin-sliding-panes .workspace>.mod-root {
     &>.workspace-leaf {
         display: block;
         flex: none;
+        
+        .workspace-leaf-content {
+            position: relative;
+        }
     }
-    .workspace-leaf-content {
-        position: relative;
-    }
+    
 
     // these two help with the scrolling issue (#17)
     .mod-am-right-of-active .cm-s-obsidian>div:not([class]) {
@@ -23,75 +25,76 @@ body.plugin-sliding-panes-stacking .workspace>.mod-root>.workspace-leaf {
     box-shadow: 0px 0px 20px 20px rgba(0, 0, 0, 0.25);
     position: sticky;
 }
-body.plugin-sliding-panes-rotate-header .workspace>.mod-root {
+body.plugin-sliding-panes-rotate-header .workspace>.mod-root>.workspace-leaf {
     /* first we'll add a bit of gap for the spines */
-    .workspace-leaf-content {
+    &>.workspace-leaf-content {
         padding-left: var(--header-width);
+        /* this is where the magic happens */
+        &>.view-header {
+            writing-mode: vertical-lr;
+            text-orientation: sideways;
+            border-right: 1px solid var(--background-secondary-alt);
+            border-left: 2px solid var(--background-secondary-alt);
+            border-top: none;
+            border-bottom: none;
+            width: var(--header-width);
+            height: auto;
+            position: absolute;
+            left:0;
+            top:0;
+            bottom:0;
+
+            /* unset the title container height and swap padding */
+            &>.view-header-title-container {
+                height: unset;
+                padding-left: unset;
+                padding-top: 5px;
+                
+                /* get rid of unnecessary padding */
+                &>.view-header-title {
+                    padding-right: 0;
+
+                    /* fix the long-title-obscuring shadows */
+                    &:after {
+                        width: 100%;
+                        height: 30px;
+                        top: unset;
+                        bottom: 0;
+                        background: linear-gradient(to bottom, transparent, var(--background-secondary));
+                    }
+                }
+            }
+
+            /* swap the padding/margin around for the header and actions icons */
+            .view-header-icon,
+            .view-actions {
+                padding: 10px 5px;
+            }
+        
+            .view-action {
+                margin: 8px 0;
+            }
+        }
+    
+    
+        /* get rid of the gap left by the now-missing horizontal title */
+        &>.view-content {
+            height: 100%;
+        }
     }
-    /* this is where the magic happens */
-    .view-header {
-        writing-mode: vertical-lr;
-        text-orientation: sideways;
-        border-right: 1px solid var(--background-secondary-alt);
-        border-left: 2px solid var(--background-secondary-alt);
-        border-top: none;
-        border-bottom: none;
-        width: var(--header-width);
-        height: auto;
-        position: absolute;
-        left:0;
-        top:0;
-        bottom:0;
-    }
+
 
     /* active titles have different border colours */
-    .workspace-leaf.mod-active .view-header {
+    &.mod-active>.workspace-leaf-content>.view-header {
         border-right: 2px solid var(--interactive-accent);
         border-bottom: none;
-    }
-
-    /* unset the title container height and swap padding */
-    .view-header-title-container {
-        height: unset;
-        padding-left: unset;
-        padding-top: 5px;
-    }
-
-    /* fix the long-title-obscuring shadows */
-    .view-header-title-container:after {
-        width: 100%;
-        height: 30px;
-        top: unset;
-        bottom: 0;
-        background: linear-gradient(to bottom, transparent, var(--background-secondary));
-    }
-
-    .workspace-leaf.mod-active .view-header-title-container:after {
-        background: linear-gradient(to bottom, transparent, var(--background-primary-alt));
-    }
-
-    /* get rid of unnecessary padding */
-    .view-header-title {
-        padding-right: 0;
-    }
-
-    /* swap the padding/margin around for the header and actions icons */
-    .view-header-icon,
-    .view-actions {
-        padding: 10px 5px;
-    }
-
-    .view-action {
-        margin: 8px 0;
-    }
-
-    /* get rid of the gap left by the now-missing horizontal title */
-    .view-content {
-        height: 100%;
+        &>.view-header-title-container:after {
+            background: linear-gradient(to bottom, transparent, var(--background-primary-alt));
+        }
     }
 }
-body.plugin-sliding-panes-rotate-header.plugin-sliding-panes-header-alt .workspace>.mod-root {
-    .view-header-title {
+body.plugin-sliding-panes-rotate-header.plugin-sliding-panes-header-alt .workspace>.mod-root>.workspace-leaf>.workspace-leaf-content>.view-header {
+    .view-header-title-container {
         transform: rotate(180deg);
         text-align: right;
         margin-top: 10px;

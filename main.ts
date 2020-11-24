@@ -12,6 +12,17 @@ export default class SlidingPanesPlugin extends Plugin {
 
   // helper gets for any casts (for undocumented API stuff)
   private get rootSplitAny(): any { return this.app.workspace.rootSplit; }
+  private get rootContainerEl(): any { return this.rootSplitAny.containerEl; }
+  private get rootLeaves(): WorkspaceLeaf[] {
+    const rootContainerEl = this.rootContainerEl;
+    let rootLeaves: WorkspaceLeaf[] = [];
+    this.app.workspace.iterateRootLeaves((leaf: any) => {
+      if (leaf.containerEl.parentElement === rootContainerEl) {
+        rootLeaves.push(leaf);
+      }
+    })
+    return rootLeaves;
+  }
 
   // when the plugin is loaded
   async onload() {
@@ -98,7 +109,7 @@ export default class SlidingPanesPlugin extends Plugin {
   // enable andy mode
   enable = () => {
     // add the event handlers
-    this.app.workspace.on('resize', this.recalculateLeaves);
+    this.app.workspace.on('resize', () => this.recalculateLeaves);
     this.app.workspace.on('file-open', this.handleFileOpen);
     this.app.vault.on('delete', this.handleDelete);
 
@@ -130,7 +141,7 @@ export default class SlidingPanesPlugin extends Plugin {
     this.removeStyle();
 
     // iterate through the root leaves to remove the stuff we added
-    this.app.workspace.iterateRootLeaves((leaf: any) => {
+    this.rootLeaves.forEach((leaf: any) => {
       leaf.containerEl.style.width = null;
       leaf.containerEl.style.left = null;
       leaf.containerEl.style.right = null;
@@ -205,16 +216,24 @@ export default class SlidingPanesPlugin extends Plugin {
   // Recalculate the leaf sizing and positions
   recalculateLeaves = () => {
     // rootSplit.children is undocumented for now, but it's easier to use for what we're doing.
-    const leafCount = this.rootSplitAny.children.length;
+    // we only want leaves at the root of the root split
+    // (this is to fix compatibility with backlinks in document and other such plugins)
+    const rootContainerEl = this.rootContainerEl;
+    const rootLeaves = this.rootLeaves;
+    const leafCount = rootLeaves.length;
+
     let totalWidth = 0;
 
     // iterate through all the root-level leaves
     // keep the leaf as `any` to get the undocumented containerEl
-    this.rootSplitAny.children.forEach((leaf: any, i: number) => {
+    let widthChange = false;
+    rootLeaves.forEach((leaf: any, i: number) => {
 
       leaf.containerEl.style.flex = null;
       if (this.settings.leafAutoWidth) {
-        leaf.containerEl.style.width = (this.rootSplitAny.containerEl.clientWidth - ((leafCount - 1) * this.settings.headerWidth)) + "px";
+        const oldWidth = leaf.containerEl.clientWidth;
+        leaf.containerEl.style.width = (rootContainerEl.clientWidth - ((leafCount - 1) * this.settings.headerWidth)) + "px";
+        if (oldWidth == leaf.containerEl.clientWidth) widthChange = true;
       }
 
       leaf.containerEl.style.left = this.settings.stackingEnabled
@@ -229,13 +248,13 @@ export default class SlidingPanesPlugin extends Plugin {
 
     // if the total width of all leaves is less than the width available,
     // add back the flex class so they fill the space
-    if (totalWidth < this.rootSplitAny.containerEl.clientWidth) {
-      this.rootSplitAny.children.forEach((leaf: any) => {
+    if (totalWidth < rootContainerEl.clientWidth) {
+      rootLeaves.forEach((leaf: any) => {
         leaf.containerEl.style.flex = '1 0 0';
       });
     }
 
-    this.focusActiveLeaf(!this.settings.leafAutoWidth);
+    if(widthChange) this.focusActiveLeaf(!this.settings.leafAutoWidth);
   }
 
   // this function is called, not only when a file opens, but when the active pane is switched
@@ -256,7 +275,8 @@ export default class SlidingPanesPlugin extends Plugin {
     // (it might not be if the workspace is reloading?)
     if (this.rootSplitAny) {
       // first we need to figure out the count of open leaves
-      const leafCount = this.rootSplitAny.children.length;
+      const rootLeaves = this.rootLeaves;
+      const leafCount = rootLeaves.length;
 
       // use this value to check if we've set an active leaf yet
       let isActiveLeafSet: boolean = false;
@@ -266,7 +286,7 @@ export default class SlidingPanesPlugin extends Plugin {
         // if the number of leaves is < our last saved value, we must have closed one (or more)
         if (leafCount < this.leavesOpenCount) {
           // iterate through the leaves
-          this.rootSplitAny.children.forEach((leaf: WorkspaceLeaf, i: number) => {
+          this.rootLeaves.forEach((leaf: WorkspaceLeaf, i: number) => {
             // if we haven't activated a leaf yet and this leaf is adjacent to the closed one
             if (!isActiveLeafSet && (i >= this.activeLeafIndex - 1)) {
               // set the active leaf (undocumented, hence `any`)
@@ -299,13 +319,18 @@ export default class SlidingPanesPlugin extends Plugin {
     }
     
     if (activeLeaf != null && this.rootSplitAny) {
+
+      const rootContainerEl = this.rootContainerEl;
+      const rootLeaves = this.rootLeaves;
+      const leafCount = rootLeaves.length;
+
       // get the index of the active leaf
       // also, get the position of this leaf, so we can scroll to it
       // as leaves are resizable, we have to iterate through all leaves to the
       // left until we get to the active one and add all their widths together
       let position = 0;
       this.activeLeafIndex = -1;
-      this.rootSplitAny.children.forEach((leaf: any, index:number) => {
+      rootLeaves.forEach((leaf: any, index:number) => {
         // this is the active one
         if (leaf == activeLeaf) {
           this.activeLeafIndex = index;
@@ -325,24 +350,20 @@ export default class SlidingPanesPlugin extends Plugin {
         }
       });
       
-      // get the total leaf count
-      const leafCount = this.rootSplitAny.children.length;
       // get this leaf's left value (the amount of space to the left for sticky headers)
       const left = parseInt(activeLeaf.containerEl.style.left) || 0;
       // the amount of space to the right we need to leave for sticky headers
       const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - this.activeLeafIndex - 1) * this.settings.headerWidth : 0;
-      // the root element we need to scroll
-      const rootEl = this.rootSplitAny.containerEl;
-      
+
       // it's too far left
-      if (rootEl.scrollLeft > position - left) {
+      if (rootContainerEl.scrollLeft > position - left) {
         // scroll the left side of the pane into view
-        rootEl.scrollTo({ left: position - left, top: 0, behavior: animated ? 'smooth': 'auto' });
+        rootContainerEl.scrollTo({ left: position - left, top: 0, behavior: animated ? 'smooth': 'auto' });
       }
       // it's too far right
-      else if (rootEl.scrollLeft + rootEl.clientWidth < position + activeLeaf.containerEl.clientWidth + headersToRightWidth) {
+      else if (rootContainerEl.scrollLeft + rootContainerEl.clientWidth < position + activeLeaf.containerEl.clientWidth + headersToRightWidth) {
         // scroll the right side of the pane into view
-        rootEl.scrollTo({ left: position + activeLeaf.containerEl.clientWidth + headersToRightWidth - rootEl.clientWidth, top: 0, behavior: animated ? 'smooth': 'auto' });
+        rootContainerEl.scrollTo({ left: position + activeLeaf.containerEl.clientWidth + headersToRightWidth - rootContainerEl.clientWidth, top: 0, behavior: animated ? 'smooth': 'auto' });
       }
     }
   }
@@ -433,8 +454,9 @@ export default class SlidingPanesPlugin extends Plugin {
         // if stacking is enabled, we need to re-jig the "right" value
         if (this.settings.stackingEnabled) {
           // we need the leaf count and index to calculate the correct value
-          const leafCount = this.rootSplitAny.children.length;
-          const leafIndex = this.rootSplitAny.children.findIndex((l: any) => l == leaf);
+          const rootLeaves = this.rootLeaves;
+          const leafCount = rootLeaves.length;
+          const leafIndex = rootLeaves.findIndex((l: any) => l == leaf);
           leaf.containerEl.style.right = (((leafCount - leafIndex - 1) * this.settings.headerWidth) - leaf.containerEl.clientWidth) + "px";
         }
 
