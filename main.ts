@@ -50,6 +50,18 @@ export default class SlidingPanesPlugin extends Plugin {
       }
     });
 
+    // add a command to toggle leaf auto width
+    this.addCommand({
+      id: 'toggle-sliding-panes-leaf-auto-width',
+      name: 'Toggle Leaf Auto Width',
+      callback: () => {
+        // switch the setting, save and refresh
+        this.settings.leafAutoWidth = !this.settings.leafAutoWidth;
+        this.saveData(this.settings);
+        this.refresh();
+      }
+    });
+
     // add a command to toggle stacking
     this.addCommand({
       id: 'toggle-sliding-panes-stacking',
@@ -204,11 +216,7 @@ export default class SlidingPanesPlugin extends Plugin {
       // set the settings-dependent css
       el.innerText = `body.plugin-sliding-panes{--header-width:${this.settings.headerWidth}px;}`;
       if (!this.settings.leafAutoWidth) {
-        el.innerText += `
-          body.plugin-sliding-panes .mod-root>.workspace-leaf{
-            width:${this.settings.leafWidth + this.settings.headerWidth}px;
-          }
-        `;
+        el.innerText += `body.plugin-sliding-panes .mod-root>.workspace-leaf{width:${this.settings.leafWidth + this.settings.headerWidth}px;}`;
       }
     }
   }
@@ -230,11 +238,14 @@ export default class SlidingPanesPlugin extends Plugin {
     rootLeaves.forEach((leaf: any, i: number) => {
 
       leaf.containerEl.style.flex = null;
+      const oldWidth = leaf.containerEl.clientWidth;
       if (this.settings.leafAutoWidth) {
-        const oldWidth = leaf.containerEl.clientWidth;
         leaf.containerEl.style.width = (rootContainerEl.clientWidth - ((leafCount - 1) * this.settings.headerWidth)) + "px";
-        if (oldWidth == leaf.containerEl.clientWidth) widthChange = true;
       }
+      else {
+        leaf.containerEl.style.width = null;
+      }
+      if (oldWidth == leaf.containerEl.clientWidth) widthChange = true;
 
       leaf.containerEl.style.left = this.settings.stackingEnabled
         ? (i * this.settings.headerWidth) + "px"
