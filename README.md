@@ -100,6 +100,11 @@ much, feel free to throw some coins in my hat via the following:
 [![Paypal](https://img.shields.io/badge/paypal-deathau-yellow?style=social&logo=paypal)](https://paypal.me/deathau)
 
 # Version History
+## 3.2.1
+- Changed the name slightly to drop the "Matuschak". Sorry Andy, but your name's just a tad unwieldy...
+- Styling tweaks to better center the elements of rotated headers
+- Fixed a code typo which was causing issues with opening and closing background panes
+
 ## 3.2.0
 - Added an "auto width" mode, where each pane will take up the available space between the spines on the left and right
 - Fix suggestion container positioning for tags (and related console errors) - Thanks, yet again, Eric Hall
