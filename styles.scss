@@ -48,27 +48,42 @@ body.plugin-sliding-panes-rotate-header .workspace>.mod-root>.workspace-leaf {
             &>.view-header-title-container {
                 height: unset;
                 padding-left: unset;
-                padding-top: 5px;
+                padding-top: 0;
                 
                 /* get rid of unnecessary padding */
                 &>.view-header-title {
                     padding-right: 0;
+                    padding-top: 15px;
+                    padding-bottom: 15px;
+                }
 
-                    /* fix the long-title-obscuring shadows */
-                    &:after {
-                        width: 100%;
-                        height: 30px;
-                        top: unset;
-                        bottom: 0;
-                        background: linear-gradient(to bottom, transparent, var(--background-secondary));
-                    }
+                /* fix the long-title-obscuring shadows */
+                &:after {
+                    width: 100%;
+                    height: 15px;
+                    top: unset;
+                    bottom: 0;
+                    background: linear-gradient(to bottom, transparent, var(--background-secondary));
+                }
+                &:before {
+                    content:'';
+                    position: absolute;
+                    width: 100%;
+                    height: 15px;
+                    top: 0;
+                    bottom: unset;
+                    background: linear-gradient(to top, transparent, var(--background-secondary));
                 }
             }
 
             /* swap the padding/margin around for the header and actions icons */
             .view-header-icon,
             .view-actions {
-                padding: 10px 5px;
+                padding: 0;
+            }
+
+            .view-header-icon {
+                margin: 8px 0 3px 0;
             }
         
             .view-action {
@@ -90,6 +105,9 @@ body.plugin-sliding-panes-rotate-header .workspace>.mod-root>.workspace-leaf {
         border-bottom: none;
         &>.view-header-title-container:after {
             background: linear-gradient(to bottom, transparent, var(--background-primary-alt));
+        }
+        &>.view-header-title-container:before {
+            background: linear-gradient(to top, transparent, var(--background-primary-alt));
         }
     }
 }
