@@ -1,6 +1,6 @@
 {
   "id": "sliding-panes-obsidian",
-  "name": "Sliding Panes (Andy Matuschak Mode)",
+  "name": "Sliding Panes (Andy's Mode)",
   "description": "Sliding Panes! Based on the style of [Andy Matuschak's Notes](https://notes.andymatuschak.org/)",
   "isDesktopOnly": false,
   "js": "main.js",
