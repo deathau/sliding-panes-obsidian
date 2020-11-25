@@ -103,6 +103,7 @@ much, feel free to throw some coins in my hat via the following:
 ## 3.2.1
 - Changed the name slightly to drop the "Matuschak". Sorry Andy, but your name's just a tad unwieldy...
 - Styling tweaks to better center the elements of rotated headers
+- Fixed the ugly shadow smudge introduced in the previous release
 - Fixed a code typo which was causing issues with opening and closing background panes
 
 ## 3.2.0
