@@ -1,7 +1,9 @@
 import './styles.scss'
-import { FileView, Plugin, TAbstractFile, WorkspaceLeaf } from 'obsidian';
+import { FileView, Plugin, TAbstractFile, WorkspaceLeaf, WorkspaceItem, WorkspaceSplit } from 'obsidian';
+import { WorkspaceItemExt } from './obsidian-ext';
 import { Editor, Position, Token } from 'codemirror';
 import { SlidingPanesSettings, SlidingPanesSettingTab, SlidingPanesCommands } from './settings';
+
 
 export default class SlidingPanesPlugin extends Plugin {
   settings: SlidingPanesSettings;
@@ -12,8 +14,9 @@ export default class SlidingPanesPlugin extends Plugin {
   private suggestionContainerObserver: MutationObserver;
 
   // helper gets for any casts (for undocumented API stuff)
-  private get rootSplitAny(): any { return this.app.workspace.rootSplit; }
-  private get rootContainerEl(): any { return this.rootSplitAny.containerEl; }
+  private get rootSplit(): WorkspaceSplit { return this.app.workspace.rootSplit; }
+  private get rootSplitAny(): any { return this.rootSplit as any; }
+  private get rootContainerEl(): HTMLElement { return (this.app.workspace.rootSplit as WorkspaceItem as WorkspaceItemExt).containerEl; }
   private get rootLeaves(): WorkspaceLeaf[] {
     const rootContainerEl = this.rootContainerEl;
     let rootLeaves: WorkspaceLeaf[] = [];
@@ -31,12 +34,11 @@ export default class SlidingPanesPlugin extends Plugin {
     this.settings = Object.assign(new SlidingPanesSettings(), await this.loadData());
 
     // if it's not disabled in the settings, enable it
-    if (!this.settings.disabled) {
-      this.enable();
-    }
+    if (!this.settings.disabled) this.enable();
 
     // add the settings tab
     this.addSettingTab(new SlidingPanesSettingTab(this.app, this));
+    // add the commands
     new SlidingPanesCommands(this).addCommands();
   }
 
@@ -48,11 +50,10 @@ export default class SlidingPanesPlugin extends Plugin {
   // enable andy mode
   enable = () => {
     // add the event handlers
-    this.app.workspace.on('resize', this.recalculateLeaves);
-    //@ts-ignore
-    this.app.workspace.on('layout-change', () => console.log('layout change!'));
-    this.app.workspace.on('file-open', this.handleFileOpen);
-    this.app.vault.on('delete', this.handleDelete);
+    this.registerEvent(this.app.workspace.on('resize', this.recalculateLeaves));
+    this.registerEvent(this.app.workspace.on('layout-change', () => console.log('layout change!')));
+    this.registerEvent(this.app.workspace.on('file-open', this.handleFileOpen));
+    this.registerEvent(this.app.vault.on('delete', this.handleDelete));
 
     // wait for layout to be ready to perform the rest
     this.app.workspace.layoutReady ? this.reallyEnable() : this.app.workspace.on('layout-ready', this.reallyEnable);
@@ -64,8 +65,8 @@ export default class SlidingPanesPlugin extends Plugin {
     this.app.workspace.off('layout-ready', this.reallyEnable);
 
     // backup the function so I can restore it
-    this.rootSplitAny.oldOnChildResizeStart = this.rootSplitAny.onChildResizeStart;
-    this.rootSplitAny.onChildResizeStart = this.onChildResizeStart;
+    this.rootSplit.oldOnChildResizeStart = this.rootSplit.onChildResizeStart;
+    this.rootSplit.onChildResizeStart = this.onChildResizeStart;
 
     // add some extra classes that can't fit in the styles.css
     // because they use settings
@@ -89,12 +90,7 @@ export default class SlidingPanesPlugin extends Plugin {
     });
 
     // restore the default functionality
-    this.rootSplitAny.onChildResizeStart = this.rootSplitAny.oldOnChildResizeStart;
-
-    // get rid of our event handlers
-    this.app.workspace.off('resize', this.recalculateLeaves);
-    this.app.workspace.off('file-open', this.handleFileOpen);
-    this.app.vault.off('delete', this.handleDelete);
+    this.rootSplit.onChildResizeStart = this.rootSplit.oldOnChildResizeStart;
   }
 
   // refresh funcion for when we change settings
@@ -161,28 +157,30 @@ export default class SlidingPanesPlugin extends Plugin {
     let totalWidth = 0;
 
     // iterate through all the root-level leaves
-    // keep the leaf as `any` to get the undocumented containerEl
     let widthChange = false;
-    rootLeaves.forEach((leaf: any, i: number) => {
+    rootLeaves.forEach((leaf: WorkspaceLeaf, i: number) => {
 
-      leaf.containerEl.style.flex = null;
-      const oldWidth = leaf.containerEl.clientWidth;
+      // @ts-ignore to get the undocumented containerEl
+      const containerEl = leaf.containerEl;
+
+      containerEl.style.flex = null;
+      const oldWidth = containerEl.clientWidth;
       if (this.settings.leafAutoWidth) {
-        leaf.containerEl.style.width = (rootContainerEl.clientWidth - ((leafCount - 1) * this.settings.headerWidth)) + "px";
+        containerEl.style.width = (rootContainerEl.clientWidth - ((leafCount - 1) * this.settings.headerWidth)) + "px";
       }
       else {
-        leaf.containerEl.style.width = null;
+        containerEl.style.width = null;
       }
-      if (oldWidth == leaf.containerEl.clientWidth) widthChange = true;
+      if (oldWidth == containerEl.clientWidth) widthChange = true;
 
-      leaf.containerEl.style.left = this.settings.stackingEnabled
+      containerEl.style.left = this.settings.stackingEnabled
         ? (i * this.settings.headerWidth) + "px"
         : null;
-      leaf.containerEl.style.right = this.settings.stackingEnabled
-        ? (((leafCount - i) * this.settings.headerWidth) - leaf.containerEl.clientWidth) + "px"
+      containerEl.style.right = this.settings.stackingEnabled
+        ? (((leafCount - i) * this.settings.headerWidth) - containerEl.clientWidth) + "px"
         : null;
       // keep track of the total width of all leaves
-      totalWidth += leaf.containerEl.clientWidth;
+      totalWidth += containerEl.clientWidth;
     });
 
     // if the total width of all leaves is less than the width available,
@@ -208,12 +206,12 @@ export default class SlidingPanesPlugin extends Plugin {
 
   focusActiveLeaf(animated: boolean = true) {
     // get back to the leaf which has been andy'd (`any` because parentSplit is undocumented)
-    let activeLeaf: any = this.app.workspace.activeLeaf;
+    let activeLeaf: WorkspaceItemExt = this.app.workspace.activeLeaf as WorkspaceItem as WorkspaceItemExt;
     while (activeLeaf != null && activeLeaf.parentSplit != null && activeLeaf.parentSplit != this.app.workspace.rootSplit) {
-      activeLeaf = activeLeaf.parentSplit;
+      activeLeaf = activeLeaf.parentSplit as WorkspaceItemExt;
     }
     
-    if (activeLeaf != null && this.rootSplitAny) {
+    if (activeLeaf != null && this.rootSplit) {
 
       const rootContainerEl = this.rootContainerEl;
       const rootLeaves = this.rootLeaves;
@@ -225,23 +223,26 @@ export default class SlidingPanesPlugin extends Plugin {
       // left until we get to the active one and add all their widths together
       let position = 0;
       this.activeLeafIndex = -1;
-      rootLeaves.forEach((leaf: any, index:number) => {
+      rootLeaves.forEach((leaf: WorkspaceItem, index: number) => {
+        // @ts-ignore to get the undocumented containerEl
+        const containerEl = leaf.containerEl;
+
         // this is the active one
         if (leaf == activeLeaf) {
           this.activeLeafIndex = index;
-          leaf.containerEl.classList.remove('mod-am-left-of-active');
-          leaf.containerEl.classList.remove('mod-am-right-of-active');
+          containerEl.classList.remove('mod-am-left-of-active');
+          containerEl.classList.remove('mod-am-right-of-active');
         }
         else if(this.activeLeafIndex == -1 || index < this.activeLeafIndex) {
           // this is before the active one, add the width
-          position += leaf.containerEl.clientWidth;
-          leaf.containerEl.classList.add('mod-am-left-of-active');
-          leaf.containerEl.classList.remove('mod-am-right-of-active');
+          position += containerEl.clientWidth;
+          containerEl.classList.add('mod-am-left-of-active');
+          containerEl.classList.remove('mod-am-right-of-active');
         }
         else {
           // this is right of the active one
-          leaf.containerEl.classList.remove('mod-am-left-of-active');
-          leaf.containerEl.classList.add('mod-am-right-of-active');
+          containerEl.classList.remove('mod-am-left-of-active');
+          containerEl.classList.add('mod-am-right-of-active');
         }
       });
       
@@ -280,7 +281,7 @@ export default class SlidingPanesPlugin extends Plugin {
   onChildResizeStart = (leaf: any, event: any) => {
 
     // only really apply this to vertical splits
-    if (this.rootSplitAny.direction === "vertical") {
+    if (this.rootSplit.direction === "vertical") {
       // this is the width the leaf started at before resize
       const startWidth = leaf.containerEl.clientWidth;
 
@@ -314,4 +315,3 @@ export default class SlidingPanesPlugin extends Plugin {
     }
   }
 }
-
