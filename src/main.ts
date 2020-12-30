@@ -1,7 +1,7 @@
 import './styles.scss'
 import { FileView, Plugin, TAbstractFile, WorkspaceLeaf } from 'obsidian';
 import { Editor, Position, Token } from 'codemirror';
-import { SlidingPanesSettings, SlidingPanesSettingTab } from './settings';
+import { SlidingPanesSettings, SlidingPanesSettingTab, SlidingPanesCommands } from './settings';
 
 export default class SlidingPanesPlugin extends Plugin {
   settings: SlidingPanesSettings;
@@ -28,7 +28,7 @@ export default class SlidingPanesPlugin extends Plugin {
   // when the plugin is loaded
   async onload() {
     // load settings
-    this.settings = await this.loadData() || new SlidingPanesSettings();
+    this.settings = Object.assign(new SlidingPanesSettings(), await this.loadData());
 
     // if it's not disabled in the settings, enable it
     if (!this.settings.disabled) {
@@ -37,67 +37,7 @@ export default class SlidingPanesPlugin extends Plugin {
 
     // add the settings tab
     this.addSettingTab(new SlidingPanesSettingTab(this.app, this));
-    // add the toggle on/off command
-    this.addCommand({
-      id: 'toggle-sliding-panes',
-      name: 'Toggle Sliding Panes',
-      callback: () => {
-        // switch the disabled setting and save
-        this.settings.disabled = !this.settings.disabled;
-        this.saveData(this.settings);
-
-        // disable or enable as necessary
-        this.settings.disabled ? this.disable() : this.enable();
-      }
-    });
-
-    // add a command to toggle leaf auto width
-    this.addCommand({
-      id: 'toggle-sliding-panes-leaf-auto-width',
-      name: 'Toggle Leaf Auto Width',
-      callback: () => {
-        // switch the setting, save and refresh
-        this.settings.leafAutoWidth = !this.settings.leafAutoWidth;
-        this.saveData(this.settings);
-        this.refresh();
-      }
-    });
-
-    // add a command to toggle stacking
-    this.addCommand({
-      id: 'toggle-sliding-panes-stacking',
-      name: 'Toggle Stacking',
-      callback: () => {
-        // switch the setting, save and refresh
-        this.settings.stackingEnabled = !this.settings.stackingEnabled;
-        this.saveData(this.settings);
-        this.refresh();
-      }
-    });
-
-    // add a command to toggle rotated headers
-    this.addCommand({
-      id: 'toggle-sliding-panes-rotated-headers',
-      name: 'Toggle Rotated Headers',
-      callback: () => {
-        // switch the setting, save and refresh
-        this.settings.rotateHeaders = !this.settings.rotateHeaders;
-        this.saveData(this.settings);
-        this.refresh();
-      }
-    });
-
-    // add a command to toggle swapped header direction
-    this.addCommand({
-      id: 'toggle-sliding-panes-header-alt',
-      name: 'Swap rotated header direction',
-      callback: () => {
-        // switch the setting, save and refresh
-        this.settings.headerAlt = !this.settings.headerAlt;
-        this.saveData(this.settings);
-        this.refresh();
-      }
-    });
+    new SlidingPanesCommands(this).addCommands();
 
     // observe the app-container for when the suggestion-container appears
     this.suggestionContainerObserver = new MutationObserver((mutations: MutationRecord[]): void => {
@@ -129,7 +69,7 @@ export default class SlidingPanesPlugin extends Plugin {
     this.app.vault.on('delete', this.handleDelete);
 
     // wait for layout to be ready to perform the rest
-    (this.app.workspace as any).layoutReady ? this.reallyEnable() : this.app.workspace.on('layout-ready', this.reallyEnable);
+    this.app.workspace.layoutReady ? this.reallyEnable() : this.app.workspace.on('layout-ready', this.reallyEnable);
   }
 
   // really enable things (once the layout is ready)
@@ -276,54 +216,10 @@ export default class SlidingPanesPlugin extends Plugin {
     // put a small timeout on it because when a file is opened on the far right 
     // it wasn't focussing properly. The timeout fixes this
     setTimeout(() => {
-      // check for a closed leaf and activate the adjacent leaf if it was
-      this.activateAdjacentLeafIfClosed(e);
       // focus on the newly selected leaf
-      this.focusLeaf(e)
+      this.focusActiveLeaf();
     }, 10);
   };
-
-  // check for a closed leaf and activate the adjacent leaf
-  activateAdjacentLeafIfClosed = async (e: any) => {
-    // check that rootSplitAny is a thing first
-    // (it might not be if the workspace is reloading?)
-    if (this.rootSplitAny) {
-      // first we need to figure out the count of open leaves
-      const rootLeaves = this.rootLeaves;
-      const leafCount = rootLeaves.length;
-
-      // use this value to check if we've set an active leaf yet
-      let isActiveLeafSet: boolean = false;
-
-      // if the number of open leaves has changed
-      if (leafCount != this.leavesOpenCount) {
-        // if the number of leaves is < our last saved value, we must have closed one (or more)
-        if (leafCount < this.leavesOpenCount) {
-          // iterate through the leaves
-          this.rootLeaves.forEach((leaf: WorkspaceLeaf, i: number) => {
-            // if we haven't activated a leaf yet and this leaf is adjacent to the closed one
-            if (!isActiveLeafSet && (i >= this.activeLeafIndex - 1)) {
-              // set the active leaf (undocumented, hence `any`)
-              (this.app.workspace as any).setActiveLeaf(leaf);
-              isActiveLeafSet = true;
-              // set the index for next time, also.
-              this.activeLeafIndex = i;
-            }
-          });
-        }
-
-        // set the new open count
-        this.leavesOpenCount = leafCount;
-
-        // recalculate leaf positions
-        this.recalculateLeaves();
-      }
-    }
-  }
-
-  focusLeaf = (file: TAbstractFile) => {
-    this.focusActiveLeaf();
-  }
 
   focusActiveLeaf(animated: boolean = true) {
     // get back to the leaf which has been andy'd (`any` because parentSplit is undocumented)
