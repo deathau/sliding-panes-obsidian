@@ -38,20 +38,6 @@ export default class SlidingPanesPlugin extends Plugin {
     // add the settings tab
     this.addSettingTab(new SlidingPanesSettingTab(this.app, this));
     new SlidingPanesCommands(this).addCommands();
-
-    // observe the app-container for when the suggestion-container appears
-    this.suggestionContainerObserver = new MutationObserver((mutations: MutationRecord[]): void => {
-      mutations.forEach((mutation: MutationRecord): void => {
-        mutation.addedNodes.forEach((node: any): void => {
-          if (node.className === 'suggestion-container') {
-            this.positionSuggestionContainer(node);
-          }
-        });
-      });
-    });
-    const observerTarget: Node = (this.app as any).dom.appContainerEl;
-    const observerConfig: MutationObserverInit = { childList: true }
-    this.suggestionContainerObserver.observe(observerTarget, observerConfig);
   }
 
   // on unload, perform the same steps as disable
@@ -109,7 +95,6 @@ export default class SlidingPanesPlugin extends Plugin {
     this.app.workspace.off('resize', this.recalculateLeaves);
     this.app.workspace.off('file-open', this.handleFileOpen);
     this.app.vault.off('delete', this.handleDelete);
-    this.suggestionContainerObserver.disconnect();
   }
 
   // refresh funcion for when we change settings
@@ -289,58 +274,6 @@ export default class SlidingPanesPlugin extends Plugin {
       }
     });
     leavesToDetach.forEach(leaf => leaf.detach());
-  };
-
-  // position the suggestion container underneath the cursor for links and tags
-  positionSuggestionContainer = (scNode: any): void => {
-    const cmEditor = (this.app.workspace.activeLeaf.view as any).sourceMode.cmEditor as Editor;
-
-    // find the open bracket or hashtag to the left of or at the cursor
-
-    const cursorPosition = cmEditor.getCursor();
-    var currentToken = cmEditor.getTokenAt(cmEditor.getCursor());
-
-    let scCursorPosition: Position;
-
-    // there's no text yet
-    if (currentToken.string === '[]' || currentToken.string === '#') { 
-      scCursorPosition = cursorPosition;
-    } 
-    // there is text
-    else {
-      // search the current line for the closest open bracket or a hashtag to the left
-      var lineTokens = cmEditor.getLineTokens(cursorPosition.line);
-      var previousTokens = lineTokens.filter((token: Token): boolean => token.start <= currentToken.start).reverse();
-      const hashtagOrBracketsToken = previousTokens.find(
-        (token: Token): boolean => token.string.contains('[') || token.string.contains('#')
-      );
-
-      if (hashtagOrBracketsToken) {
-        // position the suggestion container to just underneath the end of the open brackets
-        scCursorPosition = { line: cursorPosition.line, ch: hashtagOrBracketsToken.end };
-      } else {
-        // hashtagOrBracketsToken shouldn't be undefined, so this is just to be safe
-        scCursorPosition = cursorPosition;
-      }
-    }
-
-    const scCoords = cmEditor.charCoords(scCursorPosition);
-
-    // make sure it fits within the window
-
-    const appContainerEl = (this.app as any).dom.appContainerEl
-
-    const scRight = scCoords.left + scNode.offsetWidth;
-    const appWidth = appContainerEl.offsetWidth;
-    if (scRight > appWidth) {
-      scCoords.left -= scRight - appWidth;
-    }
-
-    // set the left coord
-    // the top coord is set by Obsidian and is correct.
-    // it's also a pain to try to recalculate so I left it out.
-
-    scNode.style.left = Math.max(scCoords.left, 0) + 'px';
   };
 
   // overriden function for rootSplit child resize
