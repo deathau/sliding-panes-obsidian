@@ -15,6 +15,7 @@ export class SlidingPanesSettings {
   rotateHeaders: boolean = true;
   headerAlt: boolean = false;
   stackingEnabled: boolean = true;
+  horizontalMode: boolean = false;
 }
 
 export class SlidingPanesSettingTab extends PluginSettingTab {
@@ -106,6 +107,16 @@ export class SlidingPanesSettingTab extends PluginSettingTab {
           this.plugin.saveData(this.plugin.settings);
           this.plugin.refresh();
         }));
+    
+    new Setting(containerEl)
+      .setName('Horizontal Mode')
+      .setDesc('Scroll up and down, instead of left and right')
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.horizontalMode)
+        .onChange((value) => {
+          this.plugin.settings.horizontalMode = value;
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
   }
 }
 
@@ -155,5 +166,7 @@ export class SlidingPanesCommands {
 
     // add a command to toggle swapped header direction
     this.addToggleSettingCommand('toggle-sliding-panes-header-alt', 'Swap rotated header direction', 'headerAlt');
+
+    this.addToggleSettingCommand('toggle-sliding-panes-horizontal-mode', 'Toggle horizontal mode', 'horizontalMode');
   }
 }

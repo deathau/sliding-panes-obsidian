@@ -90,8 +90,11 @@ export default class SlidingPanesPlugin extends Plugin {
 
   clearLeaf = (leaf: any) => {
     leaf.containerEl.style.width = null;
+    leaf.containerEl.style.height = null;
     leaf.containerEl.style.left = null;
     leaf.containerEl.style.right = null;
+    leaf.containerEl.style.top = null;
+    leaf.containerEl.style.bottom = null;
     leaf.containerEl.classList.remove('mod-am-left-of-active');
     leaf.containerEl.classList.remove('mod-am-right-of-active');
 
@@ -105,7 +108,8 @@ export default class SlidingPanesPlugin extends Plugin {
   // refresh funcion for when we change settings
   refresh = () => {
     // re-load the style
-    this.updateStyle()
+    this.updateStyle();
+    this.rootLeaves.forEach(this.clearLeaf);
     // recalculate leaf positions
     this.recalculateLeaves();
   }
@@ -118,6 +122,7 @@ export default class SlidingPanesPlugin extends Plugin {
     document.body.classList.remove('plugin-sliding-panes-rotate-header');
     document.body.classList.remove('plugin-sliding-panes-header-alt');
     document.body.classList.remove('plugin-sliding-panes-stacking');
+    document.body.classList.remove('plugin-sliding-panes-horizontal-mode');
   }
 
   // add the styling elements we need
@@ -141,6 +146,8 @@ export default class SlidingPanesPlugin extends Plugin {
     document.body.classList.toggle('plugin-sliding-panes-header-alt', this.settings.headerAlt)
     // do the same for stacking
     document.body.classList.toggle('plugin-sliding-panes-stacking', this.settings.stackingEnabled);
+
+    document.body.classList.toggle('plugin-sliding-panes-horizontal-mode', this.settings.horizontalMode);
     
     // get the custom css element
     const el = document.getElementById('plugin-sliding-panes');
@@ -183,6 +190,7 @@ export default class SlidingPanesPlugin extends Plugin {
     const leafCount = rootLeaves.length;
 
     let totalWidth = 0;
+    let totalHeight = 0;
 
     // iterate through all the root-level leaves
     let widthChange = false;
@@ -199,16 +207,30 @@ export default class SlidingPanesPlugin extends Plugin {
       else {
         containerEl.style.width = null;
       }
+
+      if (this.settings.horizontalMode) {
+        containerEl.style.height = (rootContainerEl.clientHeight - ((leafCount - 1) * this.settings.headerWidth)) + "px";
+      }
+
       if (oldWidth == containerEl.clientWidth) widthChange = true;
 
-      containerEl.style.left = this.settings.stackingEnabled
+      containerEl.style.left = this.settings.stackingEnabled && !this.settings.horizontalMode
         ? (i * this.settings.headerWidth) + "px"
         : null;
-      containerEl.style.right = this.settings.stackingEnabled
+      containerEl.style.right = this.settings.stackingEnabled && !this.settings.horizontalMode
         ? (((leafCount - i) * this.settings.headerWidth) - containerEl.clientWidth) + "px"
         : null;
+      
+      containerEl.style.top = this.settings.stackingEnabled && this.settings.horizontalMode
+        ? (i * this.settings.headerWidth) + "px"
+        : null;
+      containerEl.style.bottom = this.settings.stackingEnabled && this.settings.horizontalMode
+        ? (((leafCount - i) * this.settings.headerWidth) - containerEl.clientHeight) + "px"
+        : null;
+      
       // keep track of the total width of all leaves
       totalWidth += containerEl.clientWidth;
+      totalHeight += containerEl.clientHeight;
 
       const iconEl = (leaf.view as any).iconEl;
       const iconText = iconEl.getAttribute("aria-label");
@@ -255,7 +277,8 @@ export default class SlidingPanesPlugin extends Plugin {
       // also, get the position of this leaf, so we can scroll to it
       // as leaves are resizable, we have to iterate through all leaves to the
       // left until we get to the active one and add all their widths together
-      let position = 0;
+      let positionH = 0;
+      let positionV = 0;
       this.activeLeafIndex = -1;
       rootLeaves.forEach((leaf: WorkspaceItem, index: number) => {
         // @ts-ignore to get the undocumented containerEl
@@ -269,7 +292,8 @@ export default class SlidingPanesPlugin extends Plugin {
         }
         else if(this.activeLeafIndex == -1 || index < this.activeLeafIndex) {
           // this is before the active one, add the width
-          position += containerEl.clientWidth;
+          positionH += containerEl.clientWidth;
+          positionV += containerEl.clientHeight;
           containerEl.classList.add('mod-am-left-of-active');
           containerEl.classList.remove('mod-am-right-of-active');
         }
@@ -282,18 +306,33 @@ export default class SlidingPanesPlugin extends Plugin {
       
       // get this leaf's left value (the amount of space to the left for sticky headers)
       const left = parseInt(activeLeaf.containerEl.style.left) || 0;
+      const top = parseInt(activeLeaf.containerEl.style.top) || 0;
       // the amount of space to the right we need to leave for sticky headers
       const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - this.activeLeafIndex - 1) * this.settings.headerWidth : 0;
 
-      // it's too far left
-      if (rootContainerEl.scrollLeft > position - left) {
-        // scroll the left side of the pane into view
-        rootContainerEl.scrollTo({ left: position - left, top: 0, behavior: animated ? 'smooth': 'auto' });
+      if (this.settings.horizontalMode) {
+        // it's too far up
+        if (rootContainerEl.scrollTop > positionV - top) {
+          // scroll the top of the pane into view
+          rootContainerEl.scrollTo({ top: positionV - top, left: 0, behavior: animated ? 'smooth' : 'auto' });
+        }
+        // it's too far right
+        else if (rootContainerEl.scrollTop + rootContainerEl.clientHeight < positionV + activeLeaf.containerEl.clientHeight + headersToRightWidth) {
+          // scroll the right side of the pane into view
+          rootContainerEl.scrollTo({ top: positionV + activeLeaf.containerEl.clientHeight + headersToRightWidth - rootContainerEl.clientHeight, left: 0, behavior: animated ? 'smooth' : 'auto' });
+        }
       }
-      // it's too far right
-      else if (rootContainerEl.scrollLeft + rootContainerEl.clientWidth < position + activeLeaf.containerEl.clientWidth + headersToRightWidth) {
-        // scroll the right side of the pane into view
-        rootContainerEl.scrollTo({ left: position + activeLeaf.containerEl.clientWidth + headersToRightWidth - rootContainerEl.clientWidth, top: 0, behavior: animated ? 'smooth': 'auto' });
+      else {
+        // it's too far left
+        if (rootContainerEl.scrollLeft > positionH - left) {
+          // scroll the left side of the pane into view
+          rootContainerEl.scrollTo({ left: positionH - left, top: 0, behavior: animated ? 'smooth' : 'auto' });
+        }
+        // it's too far right
+        else if (rootContainerEl.scrollLeft + rootContainerEl.clientWidth < positionH + activeLeaf.containerEl.clientWidth + headersToRightWidth) {
+          // scroll the right side of the pane into view
+          rootContainerEl.scrollTo({ left: positionH + activeLeaf.containerEl.clientWidth + headersToRightWidth - rootContainerEl.clientWidth, top: 0, behavior: animated ? 'smooth' : 'auto' });
+        }
       }
     }
   }
