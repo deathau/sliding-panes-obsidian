@@ -34,7 +34,7 @@ easy navigation between them.
 
 Custom plugins are only available for Obsidian v0.9.7+.
 
-The current API of this repo targets Obsidian **v0.9.7**. 
+The current API of this repo targets Obsidian **v0.10.3**. 
 
 ### Notes
 This is all very expermental at the moment, so parts might not work, etc.

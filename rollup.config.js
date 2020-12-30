@@ -4,7 +4,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import scss from 'rollup-plugin-scss';
 
 export default {
-  input: 'main.ts',
+  input: 'src/main.ts',
   output: {
     dir: '.',
     sourcemap: 'inline',
