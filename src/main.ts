@@ -94,6 +94,12 @@ export default class SlidingPanesPlugin extends Plugin {
     leaf.containerEl.style.right = null;
     leaf.containerEl.classList.remove('mod-am-left-of-active');
     leaf.containerEl.classList.remove('mod-am-right-of-active');
+
+    const iconEl = (leaf.view as any).iconEl;
+    const iconText:string = iconEl.getAttribute("aria-label");
+    if (iconText.includes("(")) {
+      iconEl.setAttribute("aria-label", iconText.substring(iconText.lastIndexOf('(') + 1, iconText.lastIndexOf(')')));
+    }
   }
 
   // refresh funcion for when we change settings
@@ -203,6 +209,12 @@ export default class SlidingPanesPlugin extends Plugin {
         : null;
       // keep track of the total width of all leaves
       totalWidth += containerEl.clientWidth;
+
+      const iconEl = (leaf.view as any).iconEl;
+      const iconText = iconEl.getAttribute("aria-label");
+      if (!iconText.includes("(")) {
+        iconEl.setAttribute("aria-label", `${leaf.getDisplayText()} (${iconText})`);
+      }
     });
 
     // if the total width of all leaves is less than the width available,
