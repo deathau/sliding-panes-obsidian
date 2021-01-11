@@ -100,6 +100,12 @@ much, feel free to throw some coins in my hat via the following:
 [![Paypal](https://img.shields.io/badge/paypal-deathau-yellow?style=social&logo=paypal)](https://paypal.me/deathau)
 
 # Version History
+## 3.2.2
+- Fixed closing notes activating the leftmost note
+- Fixed position of search suggestions
+- Properly remove custom styling when moving a pane into a sidebar
+- Added the note title to the icon, so if your panes are stacked, but you're not rotating headers, you can hover over the icon to see the note title.
+
 ## 3.2.1
 - Changed the name slightly to drop the "Matuschak". Sorry Andy, but your name's just a tad unwieldy...
 - Styling tweaks to better center the elements of rotated headers
