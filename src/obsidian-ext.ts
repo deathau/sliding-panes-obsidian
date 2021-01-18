@@ -1,7 +1,7 @@
 import { SplitDirection, WorkspaceItem, WorkspaceLeaf, WorkspaceSplit } from 'obsidian';
 
 export interface WorkspaceItemExt extends WorkspaceItem {
-  parentSplit: WorkspaceSplit;
+  parentSplit: WorkspaceSplitExt;
   containerEl: HTMLElement;
 }
 

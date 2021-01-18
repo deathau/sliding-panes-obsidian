@@ -15,7 +15,10 @@ export class SlidingPanesSettings {
   rotateHeaders: boolean = true;
   headerAlt: boolean = false;
   stackingEnabled: boolean = true;
-  horizontalMode: boolean = false;
+  horizontalSliding: boolean = true;
+  horizontalStackingEnabled: boolean = false;
+  leafHeight: number = 400;
+  leafAutoHeight: boolean = true;
 }
 
 export class SlidingPanesSettingTab extends PluginSettingTab {
@@ -88,7 +91,7 @@ export class SlidingPanesSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName("Toggle stacking")
+      .setName("Toggle vertical stacking")
       .setDesc("Panes will stack up to the left and right")
       .addToggle(toggle => toggle.setValue(this.plugin.settings.stackingEnabled)
         .onChange((value) => {
@@ -109,11 +112,42 @@ export class SlidingPanesSettingTab extends PluginSettingTab {
         }));
     
     new Setting(containerEl)
-      .setName('Horizontal Mode')
-      .setDesc('Scroll up and down, instead of left and right')
-      .addToggle(toggle => toggle.setValue(this.plugin.settings.horizontalMode)
+      .setName('Toggle horizontal sliding panes')
+      .setDesc('Turns sliding panes on/off for horizontally-split panes')
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.horizontalSliding)
         .onChange((value) => {
-          this.plugin.settings.horizontalMode = value;
+          this.plugin.settings.horizontalSliding = value;
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
+    
+    new Setting(containerEl)
+      .setName('Toggle horizontal stacking')
+      .setDesc('Panes will stack up from top to bottom')
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.horizontalStackingEnabled)
+        .onChange((value) => {
+          this.plugin.settings.horizontalStackingEnabled = value;
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
+    
+    new Setting(containerEl)
+      .setName('Leaf Auto Height')
+      .setDesc('If on, the height of the pane should fill the available space')
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.leafAutoHeight)
+        .onChange((value) => {
+          this.plugin.settings.leafAutoHeight = value;
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
+
+    new Setting(containerEl)
+      .setName('Leaf Height')
+      .setDesc('The height of a single pane (only if auto height is off)')
+      .addText(text => text.setPlaceholder('Example: 700')
+        .setValue((this.plugin.settings.leafHeight || '') + '')
+        .onChange((value) => {
+          this.plugin.settings.leafHeight = parseInt(value.trim());
           this.plugin.saveData(this.plugin.settings);
           this.plugin.refresh();
         }));
