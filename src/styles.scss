@@ -118,3 +118,13 @@ body.plugin-sliding-panes-rotate-header.plugin-sliding-panes-header-alt .workspa
         margin-top: 10px;
     }
 }
+
+body.plugin-sliding-panes-rotate-header.plugin-sliding-select-orientation-sideway .workspace>.mod-root>.workspace-leaf>.workspace-leaf-content>.view-header {
+    text-orientation: sideways !important;
+}
+body.plugin-sliding-panes-rotate-header.plugin-sliding-select-orientation-mixed .workspace>.mod-root>.workspace-leaf>.workspace-leaf-content>.view-header {
+    text-orientation: mixed !important;
+}
+body.plugin-sliding-panes-rotate-header.plugin-sliding-select-orientation-upright .workspace>.mod-root>.workspace-leaf>.workspace-leaf-content>.view-header {
+    text-orientation: upright !important;
+}
