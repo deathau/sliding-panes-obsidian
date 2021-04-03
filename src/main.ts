@@ -152,8 +152,7 @@ export default class SlidingPanesPlugin extends Plugin {
         el.innerText += `body.plugin-sliding-panes .mod-root>.workspace-leaf{width:${this.settings.leafWidth + this.settings.headerWidth}px;}`;
       }
     }
-
-    var elems = document.getElementsByClassName('view-header-title');
+    
     if (this.settings.rotateHeaders){
       this.selectOrientation(this.settings.orienation);
     }
