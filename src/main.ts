@@ -152,6 +152,27 @@ export default class SlidingPanesPlugin extends Plugin {
         el.innerText += `body.plugin-sliding-panes .mod-root>.workspace-leaf{width:${this.settings.leafWidth + this.settings.headerWidth}px;}`;
       }
     }
+
+    var elems = document.getElementsByClassName('view-header-title');
+    if (this.settings.rotateHeaders){
+      switch(this.settings.orienation){
+        case 'mixed':
+          for (var i = 0; i < elems.length; i++){
+            elems[i].setAttribute('style', 'text-orientation: mixed !important;');
+          }
+          break;
+        case 'upright':
+          for (var i = 0; i < elems.length; i++){
+            elems[i].setAttribute('style', 'text-orientation: upright !important;');
+          }      
+          break;
+        case 'sideway':
+          for (var i = 0; i < elems.length; i++){          
+            elems[i].setAttribute('style', 'text-orientation: sideway !important;'); 
+          }          
+          break;
+      }
+    }
   }
 
   handleResize = () => {
