@@ -285,15 +285,18 @@ export default class SlidingPanesPlugin extends Plugin {
       // the amount of space to the right we need to leave for sticky headers
       const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - this.activeLeafIndex - 1) * this.settings.headerWidth : 0;
 
+      // determine whether to request 'smooth' animations or 'auto' snap
+      let behavior: ScrollBehavior = animated && this.settings.smoothAnimation ? 'smooth' : 'auto';
+
       // it's too far left
       if (rootContainerEl.scrollLeft > position - left) {
         // scroll the left side of the pane into view
-        rootContainerEl.scrollTo({ left: position - left, top: 0, behavior: animated ? 'smooth': 'auto' });
+        rootContainerEl.scrollTo({ left: position - left, top: 0, behavior: behavior });
       }
       // it's too far right
       else if (rootContainerEl.scrollLeft + rootContainerEl.clientWidth < position + activeLeaf.containerEl.clientWidth + headersToRightWidth) {
         // scroll the right side of the pane into view
-        rootContainerEl.scrollTo({ left: position + activeLeaf.containerEl.clientWidth + headersToRightWidth - rootContainerEl.clientWidth, top: 0, behavior: animated ? 'smooth': 'auto' });
+        rootContainerEl.scrollTo({ left: position + activeLeaf.containerEl.clientWidth + headersToRightWidth - rootContainerEl.clientWidth, top: 0, behavior: behavior });
       }
     }
   }

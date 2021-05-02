@@ -15,6 +15,7 @@ export class SlidingPanesSettings {
   rotateHeaders: boolean = true;
   headerAlt: boolean = false;
   stackingEnabled: boolean = true;
+  smoothAnimation: boolean = true;
 }
 
 export class SlidingPanesSettingTab extends PluginSettingTab {
@@ -43,6 +44,16 @@ export class SlidingPanesSettingTab extends PluginSettingTab {
           else {
             this.plugin.enable();
           }
+        }));
+
+    new Setting(containerEl)
+      .setName('Smooth Animation')
+      .setDesc('Whether to use smooth animation (on) or snapping (off)')
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.smoothAnimation)
+        .onChange((value) => {
+          this.plugin.settings.smoothAnimation = value;
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
         }));
 
     new Setting(containerEl)
@@ -143,6 +154,9 @@ export class SlidingPanesCommands {
         this.plugin.settings.disabled ? this.plugin.disable() : this.plugin.enable();
       }
     });
+
+    // add a command to toggle smooth animation
+    this.addToggleSettingCommand('toggle-sliding-panes-smooth-animation', 'Toggle Smooth Animation', 'smoothAnimation');
 
     // add a command to toggle leaf auto width
     this.addToggleSettingCommand('toggle-sliding-panes-leaf-auto-width', 'Toggle Leaf Auto Width', 'leafAutoWidth');
