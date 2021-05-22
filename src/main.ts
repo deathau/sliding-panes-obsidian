@@ -2,7 +2,7 @@ import './styles.scss'
 import { FileView, Plugin, TAbstractFile, WorkspaceLeaf, WorkspaceItem, WorkspaceSplit } from 'obsidian';
 import { WorkspaceItemExt } from './obsidian-ext';
 import { Editor, Position, Token } from 'codemirror';
-import { SlidingPanesSettings, SlidingPanesSettingTab, SlidingPanesCommands } from './settings';
+import { SlidingPanesSettings, SlidingPanesSettingTab, SlidingPanesCommands, Orientation } from './settings';
 
 
 export default class SlidingPanesPlugin extends Plugin {
@@ -152,6 +152,16 @@ export default class SlidingPanesPlugin extends Plugin {
         el.innerText += `body.plugin-sliding-panes .mod-root>.workspace-leaf{width:${this.settings.leafWidth + this.settings.headerWidth}px;}`;
       }
     }
+    
+    if (this.settings.rotateHeaders){
+      this.selectOrientation(this.settings.orienation);
+    }
+  }
+
+  selectOrientation(orient: Orientation) {
+    document.body.classList.toggle('plugin-sliding-select-orientation-mixed', orient == 'mixed');
+    document.body.classList.toggle('plugin-sliding-select-orientation-upright', orient == 'upright');
+    document.body.classList.toggle('plugin-sliding-select-orientation-sideway', orient == 'sideway');
   }
 
   handleResize = () => {

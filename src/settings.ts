@@ -1,5 +1,7 @@
 import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
+export type Orientation = "sideway" | "mixed" | "upright"
+
 declare class SlidingPanesPlugin extends Plugin {
   settings: SlidingPanesSettings;
   disable(): void;
@@ -14,6 +16,7 @@ export class SlidingPanesSettings {
   disabled: boolean = false;
   rotateHeaders: boolean = true;
   headerAlt: boolean = false;
+  orienation: Orientation = "mixed";
   stackingEnabled: boolean = true;
 }
 
@@ -85,6 +88,20 @@ export class SlidingPanesSettingTab extends PluginSettingTab {
           this.plugin.saveData(this.plugin.settings);
           this.plugin.refresh();
         }));
+
+    new Setting(containerEl)
+    .setName("Header text orientation")
+    .setDesc("Select the header text orientation")
+    .addDropdown((dropdown) => {
+      dropdown.addOption("sideway", "Sideway")
+      dropdown.addOption("mixed", "Mixed")
+      dropdown.addOption("upright", "Upright")
+      dropdown.setValue(this.plugin.settings.orienation)
+      dropdown.onChange((value: Orientation) => {
+        this.plugin.settings.orienation = value;
+        this.plugin.saveData(this.plugin.settings);
+        this.plugin.refresh();
+      })});
 
     new Setting(containerEl)
       .setName("Toggle stacking")

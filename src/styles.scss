@@ -118,3 +118,18 @@ body.plugin-sliding-panes-rotate-header.plugin-sliding-panes-header-alt .workspa
         margin-top: 10px;
     }
 }
+                
+body.plugin-sliding-panes-rotate-header.plugin-sliding-select-orientation {
+    $selector: ".workspace>.mod-root>.workspace-leaf>.workspace-leaf-content>.view-header";
+
+    &-sideway #{$selector} {
+        text-orientation: sideways !important;
+    }
+    &-mixed #{$selector} {
+        text-orientation: mixed !important;
+    }
+    &-upright #{$selector} {
+        text-orientation: upright !important;
+    }
+}
+
