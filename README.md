@@ -100,6 +100,10 @@ much, feel free to throw some coins in my hat via the following:
 [![Paypal](https://img.shields.io/badge/paypal-deathau-yellow?style=social&logo=paypal)](https://paypal.me/deathau)
 
 # Version History
+## 3.2.3
+- Add an option to select text-orientation (thanks @yo-goto)
+- Allow user to disable smooth animations (thanks @cfree3)
+
 ## 3.2.2
 - Fixed closing notes activating the leftmost note
 - Fixed position of search suggestions
