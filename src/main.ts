@@ -8,10 +8,6 @@ import { SlidingPanesSettings, SlidingPanesSettingTab, SlidingPanesCommands } fr
 export default class SlidingPanesPlugin extends Plugin {
   settings: SlidingPanesSettings;
 
-  // helper variables
-  private prevActiveLeaf: WorkspaceLeaf = null;
-  private prevRootLeaves: WorkspaceLeaf[] = [];
-
   // helper gets for any casts (for undocumented API stuff)
   private get rootSplitAny(): any { return this.app.workspace.rootSplit as any; }
 
@@ -158,106 +154,98 @@ export default class SlidingPanesPlugin extends Plugin {
   }
 
   handleLayoutChange = () => {
-    // const rootLeaves = this.rootLeaves;
-    // if (rootLeaves.length < this.prevRootLeaves.length) {
-    //   this.prevRootLeaves.forEach((leaf: any) => {
-    //     if (!rootLeaves.contains(leaf)) {
-    //       this.clearLeaf(leaf);
-    //     }
-    //   })
-    // }
-    // this.prevRootLeaves = this.rootLeaves;
+
   }
 
   // Recalculate the leaf sizing and positions
   recalculateLeaves = (split:WorkspaceSplitExt = this.app.workspace.rootSplit as WorkspaceSplitExt) => {
-    console.log("---recalculate leaves---", split)
+    // console.log("---recalculate leaves---", split)
 
-    const leafCount = split.children.length;
+    // const leafCount = split.children.length;
 
-    let totalWidth = 0;
-    let totalHeight = 0;
+    // let totalWidth = 0;
+    // let totalHeight = 0;
 
-    // iterate through all the leaves
-    let widthChange = false;
-    split.children.forEach((leaf: WorkspaceItemExt, i: number) => {
+    // // iterate through all the leaves
+    // let widthChange = false;
+    // split.children.forEach((leaf: WorkspaceItemExt, i: number) => {
 
-      const containerEl = leaf.containerEl;
-      containerEl.style.flex = null;
+    //   const containerEl = leaf.containerEl;
+    //   containerEl.style.flex = null;
 
-      // work out the width (if necessary)
-      const oldWidth = containerEl.clientWidth;
-      if (split.direction == 'vertical' && this.settings.leafAutoWidth) {
-        if (this.settings.rotateHeaders || this.settings.stackingEnabled) {
-          containerEl.style.width = (split.containerEl.clientWidth - ((leafCount - 1) * this.settings.headerWidth)) + "px";
-        }
-        else {
-          containerEl.style.width = split.containerEl.clientWidth + "px";
-        }
+    //   // work out the width (if necessary)
+    //   const oldWidth = containerEl.clientWidth;
+    //   if (split.direction == 'vertical' && this.settings.leafAutoWidth) {
+    //     if (this.settings.rotateHeaders || this.settings.stackingEnabled) {
+    //       containerEl.style.width = (split.containerEl.clientWidth - ((leafCount - 1) * this.settings.headerWidth)) + "px";
+    //     }
+    //     else {
+    //       containerEl.style.width = split.containerEl.clientWidth + "px";
+    //     }
 
-        containerEl.style.left = this.settings.stackingEnabled 
-          ? (i * this.settings.headerWidth) + "px"
-          : null;
-        containerEl.style.right = this.settings.stackingEnabled
-          ? (((leafCount - i) * this.settings.headerWidth) - containerEl.clientWidth) + "px"
-          : null;
-      }
-      else {
-        containerEl.style.width = null;
-        containerEl.style.left = null;
-        containerEl.style.right = null;
-      }
+    //     containerEl.style.left = this.settings.stackingEnabled 
+    //       ? (i * this.settings.headerWidth) + "px"
+    //       : null;
+    //     containerEl.style.right = this.settings.stackingEnabled
+    //       ? (((leafCount - i) * this.settings.headerWidth) - containerEl.clientWidth) + "px"
+    //       : null;
+    //   }
+    //   else {
+    //     containerEl.style.width = null;
+    //     containerEl.style.left = null;
+    //     containerEl.style.right = null;
+    //   }
 
-      if (split.direction == 'horizontal' && this.settings.leafAutoHeight) {
-        if (this.settings.horizontalStackingEnabled) {
-          containerEl.style.height = (split.containerEl.clientHeight - ((leafCount - 1) * this.settings.headerWidth)) + "px"
-        }
-        else {
-          containerEl.style.height = split.containerEl.clientHeight + "px";
-        }
+    //   if (split.direction == 'horizontal' && this.settings.leafAutoHeight) {
+    //     if (this.settings.horizontalStackingEnabled) {
+    //       containerEl.style.height = (split.containerEl.clientHeight - ((leafCount - 1) * this.settings.headerWidth)) + "px"
+    //     }
+    //     else {
+    //       containerEl.style.height = split.containerEl.clientHeight + "px";
+    //     }
 
-        containerEl.style.top = this.settings.horizontalStackingEnabled
-          ? (i * this.settings.headerWidth) + "px"
-          : null;
-        containerEl.style.bottom = this.settings.horizontalStackingEnabled
-          ? (((leafCount - i) * this.settings.headerWidth) - containerEl.clientHeight) + "px"
-          : null;
-      }
-      else {
-        containerEl.style.height = null;
-        containerEl.style.top = null;
-        containerEl.style.bottom = null;
-      }
+    //     containerEl.style.top = this.settings.horizontalStackingEnabled
+    //       ? (i * this.settings.headerWidth) + "px"
+    //       : null;
+    //     containerEl.style.bottom = this.settings.horizontalStackingEnabled
+    //       ? (((leafCount - i) * this.settings.headerWidth) - containerEl.clientHeight) + "px"
+    //       : null;
+    //   }
+    //   else {
+    //     containerEl.style.height = null;
+    //     containerEl.style.top = null;
+    //     containerEl.style.bottom = null;
+    //   }
 
-    //   if (oldWidth == containerEl.clientWidth) widthChange = true;
+    // //   if (oldWidth == containerEl.clientWidth) widthChange = true;
       
-      // keep track of the total width of all leaves
-      totalWidth += containerEl.clientWidth;
-      totalHeight += containerEl.clientHeight;
+    //   // keep track of the total width of all leaves
+    //   totalWidth += containerEl.clientWidth;
+    //   totalHeight += containerEl.clientHeight;
 
-      // add in a label for the note's title
-      if (leaf instanceof WorkspaceLeaf) {
-        const iconEl = (leaf.view as any).iconEl;
-        const iconText = iconEl.getAttribute("aria-label");
-        if (!iconText.includes("(")) {
-          iconEl.setAttribute("aria-label", `${leaf.getDisplayText()} (${iconText})`);
-        }
-      }
-      // loop through any child splits and process them
-      else if (leaf instanceof WorkspaceSplit) this.recalculateLeaves(leaf as WorkspaceSplit as WorkspaceSplitExt);
-      else console.error("unknown workspace item!", leaf);
-    });
+    //   // add in a label for the note's title
+    //   if (leaf instanceof WorkspaceLeaf) {
+    //     const iconEl = (leaf.view as any).iconEl;
+    //     const iconText = iconEl.getAttribute("aria-label");
+    //     if (!iconText.includes("(")) {
+    //       iconEl.setAttribute("aria-label", `${leaf.getDisplayText()} (${iconText})`);
+    //     }
+    //   }
+    //   // loop through any child splits and process them
+    //   else if (leaf instanceof WorkspaceSplit) this.recalculateLeaves(leaf as WorkspaceSplit as WorkspaceSplitExt);
+    //   else console.error("unknown workspace item!", leaf);
+    // });
 
-    // if the total width of all leaves is less than the width available,
-    // add back the flex class so they fill the space
-    if ((split.direction == 'vertical' && totalWidth < split.containerEl.clientWidth)
-      || (split.direction == 'horizontal' && totalHeight < split.containerEl.clientHeight)) {
-      split.children.forEach((leaf: any) => {
-        leaf.containerEl.style.flex = '1 0 0';
-      });
-    }
+    // // if the total width of all leaves is less than the width available,
+    // // add back the flex class so they fill the space
+    // if ((split.direction == 'vertical' && totalWidth < split.containerEl.clientWidth)
+    //   || (split.direction == 'horizontal' && totalHeight < split.containerEl.clientHeight)) {
+    //   split.children.forEach((leaf: any) => {
+    //     leaf.containerEl.style.flex = '1 0 0';
+    //   });
+    // }
 
-    // if(widthChange) this.focusActiveLeaf(!this.settings.leafAutoWidth);
+    // // if(widthChange) this.focusActiveLeaf(!this.settings.leafAutoWidth);
   }
 
   // this function is called, not only when a file opens, but when the active pane is switched
@@ -271,78 +259,78 @@ export default class SlidingPanesPlugin extends Plugin {
   };
 
   focusLeaf = (activeLeaf: WorkspaceItemExt, animated: boolean = true) => {
-    if (activeLeaf != null) {
-      const parentSplit = activeLeaf.parentSplit;
-      const parentContainerEl = parentSplit.containerEl;
-      const leaves = parentSplit.children;
-      const leafCount = leaves.length;
-      const splitDirection = parentSplit.direction;
+    // if (activeLeaf != null) {
+    //   const parentSplit = activeLeaf.parentSplit;
+    //   const parentContainerEl = parentSplit.containerEl;
+    //   const leaves = parentSplit.children;
+    //   const leafCount = leaves.length;
+    //   const splitDirection = parentSplit.direction;
       
-      // get the index of the leaf
-      // also, get the position of this leaf, so we can scroll to it
-      // as leaves are resizable, we have to iterate through all prior leaves
-      // until we get to the active one and add all their widths/heights together
-      let positionH = 0;
-      let positionV = 0;
-      let leafIndex = -1;
-      leaves.forEach((leaf: WorkspaceItemExt, index: number) => {
-        const containerEl = leaf.containerEl;
+    //   // get the index of the leaf
+    //   // also, get the position of this leaf, so we can scroll to it
+    //   // as leaves are resizable, we have to iterate through all prior leaves
+    //   // until we get to the active one and add all their widths/heights together
+    //   let positionH = 0;
+    //   let positionV = 0;
+    //   let leafIndex = -1;
+    //   leaves.forEach((leaf: WorkspaceItemExt, index: number) => {
+    //     const containerEl = leaf.containerEl;
 
-        if (leaf == activeLeaf) {
-          // if this is the active one
-          leafIndex = index;
-          containerEl.classList.remove('mod-am-pre-active');
-          containerEl.classList.remove('mod-am-post-active');
-        }
-        else if (leafIndex == -1 || index < leafIndex) {
-          // this is before the active one, add the width
-          positionH += containerEl.clientWidth;
-          positionV += containerEl.clientHeight;
-          containerEl.classList.add('mod-am-pre-active');
-          containerEl.classList.remove('mod-am-post-active');
-        }
-        else {
-          // this is after the active one
-          containerEl.classList.remove('mod-am-pre-active');
-          containerEl.classList.add('mod-am-post-active');
-        }
-      });
+    //     if (leaf == activeLeaf) {
+    //       // if this is the active one
+    //       leafIndex = index;
+    //       containerEl.classList.remove('mod-am-pre-active');
+    //       containerEl.classList.remove('mod-am-post-active');
+    //     }
+    //     else if (leafIndex == -1 || index < leafIndex) {
+    //       // this is before the active one, add the width
+    //       positionH += containerEl.clientWidth;
+    //       positionV += containerEl.clientHeight;
+    //       containerEl.classList.add('mod-am-pre-active');
+    //       containerEl.classList.remove('mod-am-post-active');
+    //     }
+    //     else {
+    //       // this is after the active one
+    //       containerEl.classList.remove('mod-am-pre-active');
+    //       containerEl.classList.add('mod-am-post-active');
+    //     }
+    //   });
 
-      // get this leaf's left value (the amount of space to the left for sticky headers)
-      const left = parseInt(activeLeaf.containerEl.style.left) || 0;
-      const top = parseInt(activeLeaf.containerEl.style.top) || 0;
+    //   // get this leaf's left value (the amount of space to the left for sticky headers)
+    //   const left = parseInt(activeLeaf.containerEl.style.left) || 0;
+    //   const top = parseInt(activeLeaf.containerEl.style.top) || 0;
 
-      // the amount of space to the right we need to leave for sticky headers
-      const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - leafIndex - 1) * this.settings.headerWidth : 0;
-      if (splitDirection == 'horizontal') {
-        // it's too far up
-        if (parentContainerEl.scrollTop > positionV - top) {
-          // scroll the top of the pane into view
-          parentContainerEl.scrollTo({ top: positionV - top, left: 0, behavior: animated ? 'smooth' : 'auto' });
-        }
-        // it's too far right
-        else if (parentContainerEl.scrollTop + parentContainerEl.clientHeight < positionV + activeLeaf.containerEl.clientHeight + headersToRightWidth) {
-          // scroll the right side of the pane into view
-          parentContainerEl.scrollTo({ top: positionV + activeLeaf.containerEl.clientHeight + headersToRightWidth - parentContainerEl.clientHeight, left: 0, behavior: animated ? 'smooth' : 'auto' });
-        }
-      }
-      else {
-        // it's too far left
-        if (parentContainerEl.scrollLeft > positionH - left) {
-          // scroll the left side of the pane into view
-          parentContainerEl.scrollTo({ left: positionH - left, top: 0, behavior: animated ? 'smooth' : 'auto' });
-        }
-        // it's too far right
-        else if (parentContainerEl.scrollLeft + parentContainerEl.clientWidth < positionH + activeLeaf.containerEl.clientWidth + headersToRightWidth) {
-          // scroll the right side of the pane into view
-          parentContainerEl.scrollTo({ left: positionH + activeLeaf.containerEl.clientWidth + headersToRightWidth - parentContainerEl.clientWidth, top: 0, behavior: animated ? 'smooth' : 'auto' });
-        }
-      }
+    //   // the amount of space to the right we need to leave for sticky headers
+    //   const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - leafIndex - 1) * this.settings.headerWidth : 0;
+    //   if (splitDirection == 'horizontal') {
+    //     // it's too far up
+    //     if (parentContainerEl.scrollTop > positionV - top) {
+    //       // scroll the top of the pane into view
+    //       parentContainerEl.scrollTo({ top: positionV - top, left: 0, behavior: animated ? 'smooth' : 'auto' });
+    //     }
+    //     // it's too far right
+    //     else if (parentContainerEl.scrollTop + parentContainerEl.clientHeight < positionV + activeLeaf.containerEl.clientHeight + headersToRightWidth) {
+    //       // scroll the right side of the pane into view
+    //       parentContainerEl.scrollTo({ top: positionV + activeLeaf.containerEl.clientHeight + headersToRightWidth - parentContainerEl.clientHeight, left: 0, behavior: animated ? 'smooth' : 'auto' });
+    //     }
+    //   }
+    //   else {
+    //     // it's too far left
+    //     if (parentContainerEl.scrollLeft > positionH - left) {
+    //       // scroll the left side of the pane into view
+    //       parentContainerEl.scrollTo({ left: positionH - left, top: 0, behavior: animated ? 'smooth' : 'auto' });
+    //     }
+    //     // it's too far right
+    //     else if (parentContainerEl.scrollLeft + parentContainerEl.clientWidth < positionH + activeLeaf.containerEl.clientWidth + headersToRightWidth) {
+    //       // scroll the right side of the pane into view
+    //       parentContainerEl.scrollTo({ left: positionH + activeLeaf.containerEl.clientWidth + headersToRightWidth - parentContainerEl.clientWidth, top: 0, behavior: animated ? 'smooth' : 'auto' });
+    //     }
+    //   }
 
-      if (parentSplit != this.app.workspace.rootSplit) {
-        this.focusLeaf(parentSplit as WorkspaceItem as WorkspaceItemExt);
-      }
-    }
+    //   if (parentSplit != this.app.workspace.rootSplit) {
+    //     this.focusLeaf(parentSplit as WorkspaceItem as WorkspaceItemExt);
+    //   }
+    // }
   }
 
   focusActiveLeaf = (animated: boolean = true) => {
@@ -350,80 +338,6 @@ export default class SlidingPanesPlugin extends Plugin {
     if (activeLeaf && activeLeaf.getRoot() == this.app.workspace.rootSplit) {
       this.focusLeaf(activeLeaf as WorkspaceItemExt, animated);
     }
-    // // get back to the leaf which has been andy'd (`any` because parentSplit is undocumented)
-    // let activeLeaf: WorkspaceItemExt = this.app.workspace.activeLeaf as WorkspaceItem as WorkspaceItemExt;
-    // while (activeLeaf != null && activeLeaf.parentSplit != null && activeLeaf.parentSplit != this.app.workspace.rootSplit) {
-    //   activeLeaf = activeLeaf.parentSplit as WorkspaceItemExt;
-    // }
-    
-    // if (activeLeaf != null && this.rootSplit) {
-
-    //   const rootContainerEl = this.rootContainerEl;
-    //   const rootLeaves = this.rootLeaves;
-    //   const leafCount = rootLeaves.length;
-
-    //   // get the index of the active leaf
-    //   // also, get the position of this leaf, so we can scroll to it
-    //   // as leaves are resizable, we have to iterate through all leaves to the
-    //   // left until we get to the active one and add all their widths together
-    //   let positionH = 0;
-    //   let positionV = 0;
-    //   this.activeLeafIndex = -1;
-    //   rootLeaves.forEach((leaf: WorkspaceItem, index: number) => {
-    //     // @ts-ignore to get the undocumented containerEl
-    //     const containerEl = leaf.containerEl;
-
-    //     // this is the active one
-    //     if (leaf == activeLeaf) {
-    //       this.activeLeafIndex = index;
-    //       containerEl.classList.remove('mod-am-left-of-active');
-    //       containerEl.classList.remove('mod-am-right-of-active');
-    //     }
-    //     else if(this.activeLeafIndex == -1 || index < this.activeLeafIndex) {
-    //       // this is before the active one, add the width
-    //       positionH += containerEl.clientWidth;
-    //       positionV += containerEl.clientHeight;
-    //       containerEl.classList.add('mod-am-left-of-active');
-    //       containerEl.classList.remove('mod-am-right-of-active');
-    //     }
-    //     else {
-    //       // this is right of the active one
-    //       containerEl.classList.remove('mod-am-left-of-active');
-    //       containerEl.classList.add('mod-am-right-of-active');
-    //     }
-    //   });
-      
-    //   // get this leaf's left value (the amount of space to the left for sticky headers)
-    //   const left = parseInt(activeLeaf.containerEl.style.left) || 0;
-    //   const top = parseInt(activeLeaf.containerEl.style.top) || 0;
-    //   // the amount of space to the right we need to leave for sticky headers
-    //   const headersToRightWidth = this.settings.stackingEnabled ? (leafCount - this.activeLeafIndex - 1) * this.settings.headerWidth : 0;
-
-    //   if (this.settings.horizontalMode) {
-    //     // it's too far up
-    //     if (rootContainerEl.scrollTop > positionV - top) {
-    //       // scroll the top of the pane into view
-    //       rootContainerEl.scrollTo({ top: positionV - top, left: 0, behavior: animated ? 'smooth' : 'auto' });
-    //     }
-    //     // it's too far right
-    //     else if (rootContainerEl.scrollTop + rootContainerEl.clientHeight < positionV + activeLeaf.containerEl.clientHeight + headersToRightWidth) {
-    //       // scroll the right side of the pane into view
-    //       rootContainerEl.scrollTo({ top: positionV + activeLeaf.containerEl.clientHeight + headersToRightWidth - rootContainerEl.clientHeight, left: 0, behavior: animated ? 'smooth' : 'auto' });
-    //     }
-    //   }
-    //   else {
-    //     // it's too far left
-    //     if (rootContainerEl.scrollLeft > positionH - left) {
-    //       // scroll the left side of the pane into view
-    //       rootContainerEl.scrollTo({ left: positionH - left, top: 0, behavior: animated ? 'smooth' : 'auto' });
-    //     }
-    //     // it's too far right
-    //     else if (rootContainerEl.scrollLeft + rootContainerEl.clientWidth < positionH + activeLeaf.containerEl.clientWidth + headersToRightWidth) {
-    //       // scroll the right side of the pane into view
-    //       rootContainerEl.scrollTo({ left: positionH + activeLeaf.containerEl.clientWidth + headersToRightWidth - rootContainerEl.clientWidth, top: 0, behavior: animated ? 'smooth' : 'auto' });
-    //     }
-    //   }
-    // }
   }
 
   // hande when a file is deleted
@@ -442,38 +356,5 @@ export default class SlidingPanesPlugin extends Plugin {
   // overriden function for rootSplit child resize
   onChildResizeStart = (leaf: any, event: any) => {
 
-    // // only really apply this to vertical splits
-    // if (this.rootSplitAny.direction === "vertical") {
-    //   // this is the width the leaf started at before resize
-    //   const startWidth = leaf.containerEl.clientWidth;
-
-    //   // the mousemove event to trigger while resizing
-    //   const mousemove = (e: any) => {
-    //     // get the difference between the first position and current
-    //     const deltaX = e.pageX - event.pageX;
-    //     // adjust the start width by the delta
-    //     leaf.containerEl.style.width = `${startWidth + deltaX}px`;
-    //   }
-
-    //   // the mouseup event to trigger at the end of resizing
-    //   const mouseup = () => {
-    //     // if stacking is enabled, we need to re-jig the "right" value
-    //     if (this.settings.stackingEnabled) {
-    //       // we need the leaf count and index to calculate the correct value
-    //       const rootLeaves = this.rootLeaves;
-    //       const leafCount = rootLeaves.length;
-    //       const leafIndex = rootLeaves.findIndex((l: any) => l == leaf);
-    //       leaf.containerEl.style.right = (((leafCount - leafIndex - 1) * this.settings.headerWidth) - leaf.containerEl.clientWidth) + "px";
-    //     }
-
-    //     // remove these event listeners. We're done with them
-    //     document.removeEventListener("mousemove", mousemove);
-    //     document.removeEventListener("mouseup", mouseup);
-    //   }
-
-    //   // Add the above two event listeners
-    //   document.addEventListener("mousemove", mousemove);
-    //   document.addEventListener("mouseup", mouseup);
-    // }
   }
 }

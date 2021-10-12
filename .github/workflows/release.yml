@@ -88,4 +88,3 @@ jobs:
         asset_path: ./styles.css
         asset_name: styles.css
         asset_content_type: text/css
-    # TODO: release notes???

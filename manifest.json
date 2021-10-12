@@ -1,10 +1,10 @@
 {
-  "id": "sliding-panes-obsidian",
-  "name": "Sliding Panes (Andy's Mode)",
+  "id": "sliding-panes-v4-obsidian",
+  "name": "Sliding Panes v4 (Andy's Mode)",
   "author": "death_au",
   "authorUrl": "https://github.com/deathau",
   "description": "Sliding Panes! Based on the style of [Andy Matuschak's Notes](https://notes.andymatuschak.org/)",
   "isDesktopOnly": false,
-  "version": "3.2.1",
+  "version": "4.0.0",
   "minAppVersion": "0.10.3"
 }
