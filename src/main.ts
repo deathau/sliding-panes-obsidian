@@ -153,10 +153,9 @@ export default class SlidingPanesPlugin extends Plugin {
   }
 
   handleResize = () => {
-    // console.log('handle resize')
-    // if (this.app.workspace.layoutReady) {
-    //   this.recalculateLeaves();
-    // }
+    if (this.app.workspace.layoutReady) {
+      this.recalculateLeaves();
+    }
   }
 
   handleLayoutChange = () => {

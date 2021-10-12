@@ -48,6 +48,18 @@ export class SlidingPanesSettingTab extends PluginSettingTab {
             this.plugin.enable();
           }
         }));
+    
+    containerEl.createEl('h3', { text: 'Vertical split settings' });
+
+    new Setting(containerEl)
+      .setName("Toggle vertical stacking")
+      .setDesc("Panes will stack up to the left and right")
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.stackingEnabled)
+        .onChange((value) => {
+          this.plugin.settings.stackingEnabled = value;
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
 
     new Setting(containerEl)
       .setName('Leaf Auto Width')
@@ -69,47 +81,8 @@ export class SlidingPanesSettingTab extends PluginSettingTab {
           this.plugin.saveData(this.plugin.settings);
           this.plugin.refresh();
         }));
-
-    new Setting(containerEl)
-      .setName("Toggle rotated headers")
-      .setDesc("Rotates headers to use as spines")
-      .addToggle(toggle => toggle.setValue(this.plugin.settings.rotateHeaders)
-        .onChange((value) => {
-          this.plugin.settings.rotateHeaders = value;
-          this.plugin.saveData(this.plugin.settings);
-          this.plugin.refresh();
-        }));
-
-    new Setting(containerEl)
-      .setName("Swap rotated header direction")
-      .setDesc("Swaps the direction of rotated headers")
-      .addToggle(toggle => toggle.setValue(this.plugin.settings.headerAlt)
-        .onChange((value) => {
-          this.plugin.settings.headerAlt = value;
-          this.plugin.saveData(this.plugin.settings);
-          this.plugin.refresh();
-        }));
-
-    new Setting(containerEl)
-      .setName("Toggle vertical stacking")
-      .setDesc("Panes will stack up to the left and right")
-      .addToggle(toggle => toggle.setValue(this.plugin.settings.stackingEnabled)
-        .onChange((value) => {
-          this.plugin.settings.stackingEnabled = value;
-          this.plugin.saveData(this.plugin.settings);
-          this.plugin.refresh();
-        }));
-
-    new Setting(containerEl)
-      .setName('Spine Width')
-      .setDesc('The width of the rotated header (or gap) for stacking')
-      .addText(text => text.setPlaceholder('Example: 32')
-        .setValue((this.plugin.settings.headerWidth || '') + '')
-        .onChange((value) => {
-          this.plugin.settings.headerWidth = parseInt(value.trim());
-          this.plugin.saveData(this.plugin.settings);
-          this.plugin.refresh();
-        }));
+    
+    containerEl.createEl('h3', { text: 'Horizontal split settings' });
     
     new Setting(containerEl)
       .setName('Toggle horizontal sliding panes')
@@ -148,6 +121,39 @@ export class SlidingPanesSettingTab extends PluginSettingTab {
         .setValue((this.plugin.settings.leafHeight || '') + '')
         .onChange((value) => {
           this.plugin.settings.leafHeight = parseInt(value.trim());
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
+    
+    containerEl.createEl('h3', { text: 'Note Spine settings' });
+
+    new Setting(containerEl)
+      .setName("Toggle Note Spines (rotated headers)")
+      .setDesc("Adds in rotated headers to use as spines (useful with stacking to identify notes)")
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.rotateHeaders)
+        .onChange((value) => {
+          this.plugin.settings.rotateHeaders = value;
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
+
+    new Setting(containerEl)
+      .setName("Swap spine direction")
+      .setDesc("Swaps the direction of text on the spine")
+      .addToggle(toggle => toggle.setValue(this.plugin.settings.headerAlt)
+        .onChange((value) => {
+          this.plugin.settings.headerAlt = value;
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
+
+    new Setting(containerEl)
+      .setName('Spine Width')
+      .setDesc('The width of the header and spine (or gap) for stacking')
+      .addText(text => text.setPlaceholder('Example: 32')
+        .setValue((this.plugin.settings.headerWidth || '') + '')
+        .onChange((value) => {
+          this.plugin.settings.headerWidth = parseInt(value.trim());
           this.plugin.saveData(this.plugin.settings);
           this.plugin.refresh();
         }));
