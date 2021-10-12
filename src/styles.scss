@@ -1,37 +1,115 @@
-// only work on panes inside the .mod-root (not in sidebars)
-body.plugin-sliding-panes .workspace .mod-root {
+body { /* intentionally left blank */ }
+
+// sliding panes for vertical splits
+body.plugin-sliding-panes {
+  // only on the root of the workspace (not sidebars)
+  .workspace>.mod-root {
+    // for vertical splits:
     .mod-vertical, &.mod-vertical {
-        overflow-x: auto;
-        overflow-y: hidden;
-        &>* {
-            flex: none;
-            &>.workspace-leaf-content{
-                position: relative;
-            }
-        }
+      overflow-x: auto;
+      overflow-y: hidden;
+
+      // fix the width of the leaves:
+      &>.workspace-leaf, &>.workspace-split {
+        min-width: min(var(--leaf-width, 100%), 100%);
+      }
     }
+  }
 }
 
-// body.plugin-sliding-panes-horizontal-sliding .workspace .mod-root {
-//     .mod-horizontal, &.mod-horizontal {
-//         overflow-x: hidden;
-//         overflow-y: auto;
-//         &>* {
-//             flex:none;
-//             &>.workspace-leaf-content{
-//                 position: relative;
-//             }
-//         }
-//     }
-// }
+// vertical stacking
+body.plugin-sliding-panes-vertical-stacking {
+  // only on the root of the workspace (not sidebars)
+  .workspace>.mod-root {
+    // for vertical splits:
+    .mod-vertical, &.mod-vertical {
+      // add shadow and stickiness
+      &>.workspace-leaf, &>.workspace-split {
+        box-shadow: 0px 0px 20px 20px rgba(0, 0, 0, 0.25);
+        background-color: var(--background-secondary-alt);
+        position: sticky;
+        left:0;
+      }
+    }
+  }
+}
 
-// body.plugin-sliding-panes-vertical-stacking .workspace .mod-root {
-//     .mod-vertical, &.mod-vertical,
-//     .mod-horizontal, &.mod-horizontal {
-//         &>.workspace-leaf,
-//         &>.workspace-split {
-//             box-shadow: 0px 0px 20px 20px rgba(0, 0, 0, 0.25);
-//             background-color: var(--background-secondary-alt);
-//         }
-//     }
-// }
+// only if horizontal sliding is enabled
+body.plugin-sliding-panes-horizontal-sliding {
+  // only on the root of the workspace (not sidebars)
+  .workspace>.mod-root {
+    // for horizontal splits:
+    .mod-horizontal, &.mod-horizontal {
+      overflow-x: hidden;
+      overflow-y: auto;
+
+      // fix the height of the leaves:
+      &>.workspace-leaf, &>.workspace-split {
+        min-height: min(var(--leaf-height, 100%), 100%);
+      }
+    }
+  }
+}
+
+// vertical stacking
+body.plugin-sliding-panes-horizontal-stacking {
+  // only on the root of the workspace (not sidebars)
+  .workspace>.mod-root {
+    // for vertical splits:
+    .mod-horizontal, &.mod-horizontal {
+      // add shadow and stickiness
+      &>.workspace-leaf, &>.workspace-split {
+        box-shadow: 0px 0px 20px 20px rgba(0, 0, 0, 0.25);
+        background-color: var(--background-secondary-alt);
+        position: sticky;
+        top: 0;
+      }
+    }
+  }
+}
+
+.view-header {
+  height: var(--header-width);
+}
+
+body.plugin-sliding-panes-rotate-header{
+  // only on the root of the workspace (not sidebars)
+  .workspace>.mod-root {
+    .workspace-leaf {
+      &::before{
+        content: attr(data-title);
+        width: var(--header-width);
+        writing-mode: vertical-lr;
+        text-orientation: sideways;
+        position: absolute;
+        left:0;
+        top: calc(var(--header-width) - 2px);
+        bottom:0;
+        z-index: 2;
+        padding: 10px 0;
+        color: var(--text-muted);
+        font-size: 17px;
+        font-weight: 600;
+        overflow: auto;
+        white-space: pre;
+        word-wrap: normal;
+        line-height: var(--header-width);
+
+        border-left: 1px solid var(--background-secondary-alt);
+        border-right: 2px solid var(--background-secondary-alt);
+        background-color: var(--background-secondary);
+      }
+      &.mod-active::before{
+        color: var(--text-normal);
+        background-color: var(--background-primary-alt);
+        border-right: 2px solid var(--interactive-accent);
+      }
+      &>.workspace-leaf-content>.view-content{
+        padding-left: var(--header-width);
+      }
+      &>.workspace-leaf-content>.view-header{
+        border-left: 1px solid var(--background-secondary-alt);
+      }
+    }
+  }
+}
