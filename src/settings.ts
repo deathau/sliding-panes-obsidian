@@ -11,7 +11,8 @@ declare class SlidingPanesPlugin extends Plugin {
 
 export class SlidingPanesSettings {
   headerWidth: number = 32;
-  leafWidth: number = 700;
+  leafDesktopWidth: number = 700;
+  leafMobileWidth: number = 350;
   leafAutoWidth: boolean = false;
   disabled: boolean = false;
   rotateHeaders: boolean = true;
@@ -70,12 +71,23 @@ export class SlidingPanesSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName('Leaf Width')
+      .setName('Leaf Width on Desktop')
       .setDesc('The width of a single pane (only if auto width is off)')
       .addText(text => text.setPlaceholder('Example: 700')
-        .setValue((this.plugin.settings.leafWidth || '') + '')
+        .setValue((this.plugin.settings.leafDesktopWidth || '') + '')
         .onChange((value) => {
-          this.plugin.settings.leafWidth = parseInt(value.trim());
+          this.plugin.settings.leafDesktopWidth = parseInt(value.trim());
+          this.plugin.saveData(this.plugin.settings);
+          this.plugin.refresh();
+        }));
+
+    new Setting(containerEl)
+      .setName('Leaf Width on Mobile')
+      .setDesc('The width of a single pane (only if auto width is off)')
+      .addText(text => text.setPlaceholder('Example: 350')
+        .setValue((this.plugin.settings.leafMobileWidth || '') + '')
+        .onChange((value) => {
+          this.plugin.settings.leafMobileWidth = parseInt(value.trim());
           this.plugin.saveData(this.plugin.settings);
           this.plugin.refresh();
         }));
