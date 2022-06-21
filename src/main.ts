@@ -1,18 +1,17 @@
-import './styles.scss'
-import { FileView, Plugin, TAbstractFile, WorkspaceLeaf, WorkspaceItem, WorkspaceSplit } from 'obsidian';
+import { FileView, Plugin, TAbstractFile, WorkspaceLeaf, WorkspaceItem, WorkspaceSplit, TFile } from 'obsidian';
 import { WorkspaceItemExt } from './obsidian-ext';
 import { Editor, Position, Token } from 'codemirror';
 import { SlidingPanesSettings, SlidingPanesSettingTab, SlidingPanesCommands, Orientation } from './settings';
+import { PluginBase } from './plugin-base'
 
 
-export default class SlidingPanesPlugin extends Plugin {
+export default class SlidingPanesPlugin extends PluginBase {
   settings: SlidingPanesSettings;
 
   // helper variables
   private activeLeafIndex: number = 0;
 
   // helper gets for any casts (for undocumented API stuff)
-  private get rootSplit(): WorkspaceSplit { return this.app.workspace.rootSplit; }
   private get rootSplitAny(): any { return this.rootSplit as any; }
   private get rootContainerEl(): HTMLElement { return (this.app.workspace.rootSplit as WorkspaceItem as WorkspaceItemExt).containerEl; }
   private get rootLeaves(): WorkspaceLeaf[] {
@@ -27,35 +26,45 @@ export default class SlidingPanesPlugin extends Plugin {
   }
   private prevRootLeaves: WorkspaceLeaf[] = [];
 
-  // when the plugin is loaded
-  async onload() {
+  // runs when the plugin is loaded
+  onload = async () => {
     // load settings
     this.settings = Object.assign(new SlidingPanesSettings(), await this.loadData());
 
-    // if it's not disabled in the settings, enable it
-    if (!this.settings.disabled) this.enable();
+    // add in the required command pallete commands
+    this.addCommands();
 
-    // add the settings tab
-    this.addSettingTab(new SlidingPanesSettingTab(this.app, this));
+    // add in any settings
+    this.addSettings();
+
+    // wait for layout to be ready to perform the rest
+    this.app.workspace.onLayoutReady(this.onLayoutReady);
+  }
+
+  // add in any required command pallete commands
+  addCommands = () => {
     // add the commands
     new SlidingPanesCommands(this).addCommands();
   }
 
-  // on unload, perform the same steps as disable
-  onunload() {
-    this.disable();
+  // add in any settings
+  addSettings = () => {
+    // add the settings tab
+    this.addSettingTab(new SlidingPanesSettingTab(this.app, this));
   }
 
   // enable andy mode
   enable = () => {
-    // add the event handlers
-    this.registerEvent(this.app.workspace.on('resize', this.handleResize));
-    this.registerEvent(this.app.workspace.on('layout-change', this.handleLayoutChange));
-    this.registerEvent(this.app.workspace.on('file-open', this.handleFileOpen));
-    this.registerEvent(this.app.vault.on('delete', this.handleDelete));
+    if(!this.settings?.disabled) {
+      // add the event handlers
+      this.registerEvent(this.app.workspace.on('resize', this.handleResize));
+      this.registerEvent(this.app.workspace.on('layout-change', this.handleLayoutChange));
+      this.registerEvent(this.app.workspace.on('active-leaf-change', this.handleActiveLeafChange));
+      this.registerEvent(this.app.vault.on('delete', this.handleDelete));
 
-    // wait for layout to be ready to perform the rest
-    this.app.workspace.layoutReady ? this.reallyEnable() : this.app.workspace.on('layout-ready', this.reallyEnable);
+      // wait for layout to be ready to perform the rest
+      if(this.app.workspace.layoutReady) this.reallyEnable() 
+    }
   }
 
   // really enable things (once the layout is ready)
@@ -235,27 +244,23 @@ export default class SlidingPanesPlugin extends Plugin {
       });
     }
 
-    if(widthChange) this.focusActiveLeaf(!this.settings.leafAutoWidth);
+    let activeLeaf: WorkspaceItemExt = this.app.workspace.getLeaf() as WorkspaceItem as WorkspaceItemExt;
+    if(widthChange) this.focusLeaf(activeLeaf, !this.settings.leafAutoWidth);
   }
 
-  // this function is called, not only when a file opens, but when the active pane is switched
-  handleFileOpen = (e: any): void => {
-    // put a small timeout on it because when a file is opened on the far right 
-    // it wasn't focussing properly. The timeout fixes this
-    setTimeout(() => {
-      // focus on the newly selected leaf
-      this.focusActiveLeaf();
-    }, 10);
-  };
+  handleActiveLeafChange = (leaf: WorkspaceLeaf | null) =>{
+    if (leaf) {
+      this.focusLeaf(leaf as WorkspaceItem as WorkspaceItemExt);
+    }
+  }
 
-  focusActiveLeaf(animated: boolean = true) {
+  focusLeaf(activeLeaf:WorkspaceItemExt, animated: boolean = true) {
     // get back to the leaf which has been andy'd (`any` because parentSplit is undocumented)
-    let activeLeaf: WorkspaceItemExt = this.app.workspace.activeLeaf as WorkspaceItem as WorkspaceItemExt;
     while (activeLeaf != null && activeLeaf.parentSplit != null && activeLeaf.parentSplit != this.app.workspace.rootSplit) {
       activeLeaf = activeLeaf.parentSplit as WorkspaceItemExt;
     }
-    
-    if (activeLeaf != null && this.rootSplit) {
+
+    if (activeLeaf != null && this.rootSplit && activeLeaf.parentSplit == this.rootSplit) {
 
       const rootContainerEl = this.rootContainerEl;
       const rootLeaves = this.rootLeaves;
