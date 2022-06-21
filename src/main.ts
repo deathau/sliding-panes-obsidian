@@ -1,4 +1,4 @@
-import { FileView, Plugin, TAbstractFile, WorkspaceLeaf, WorkspaceItem, WorkspaceSplit, TFile } from 'obsidian';
+import { FileView, Plugin, TAbstractFile, WorkspaceLeaf, WorkspaceItem, WorkspaceSplit, Platform, TFile } from 'obsidian';
 import { WorkspaceItemExt } from './obsidian-ext';
 import { Editor, Position, Token } from 'codemirror';
 import { SlidingPanesSettings, SlidingPanesSettingTab, SlidingPanesCommands, Orientation } from './settings';
@@ -158,7 +158,12 @@ export default class SlidingPanesPlugin extends PluginBase {
       // set the settings-dependent css
       el.innerText = `body.plugin-sliding-panes{--header-width:${this.settings.headerWidth}px;}`;
       if (!this.settings.leafAutoWidth) {
-        el.innerText += `body.plugin-sliding-panes .mod-root>.workspace-leaf{width:${this.settings.leafWidth + this.settings.headerWidth}px;}`;
+        if (Platform.isDesktop) {
+          el.innerText += `body.plugin-sliding-panes .mod-root>.workspace-leaf{width:${this.settings.leafDesktopWidth + this.settings.headerWidth}px;}`;
+        }
+        else {
+          el.innerText += `body.plugin-sliding-panes .mod-root>.workspace-leaf{width:${this.settings.leafMobileWidth + this.settings.headerWidth}px;}`;
+        }
       }
     }
     
