@@ -100,6 +100,10 @@ much, feel free to throw some coins in my hat via the following:
 [![Paypal](https://img.shields.io/badge/paypal-deathau-yellow?style=social&logo=paypal)](https://paypal.me/deathau)
 
 # Version History
+
+## 3.2.5
+- Quick fix to prevent sliding panes in popout windows, as the experience is currently borked.
+
 ## 3.2.4
 - Fixed some focus issues with Obsidian 0.15
 - Added seperate options for desktop and mobile leaf width (thanks @Bevaz)
