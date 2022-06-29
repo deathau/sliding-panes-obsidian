@@ -20,7 +20,7 @@
     "@rollup/plugin-node-resolve": "^13.3.0",
     "@rollup/plugin-typescript": "^8.3.3",
     "@types/node": "^18.0.0",
-    "obsidian": "0.15.1",
+    "obsidian": "^0.15.3",
     "rollup": "^2.75.7",
     "rollup-plugin-scss": "^3.0.0",
     "sass": "^1.52.3",

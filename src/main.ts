@@ -1,6 +1,5 @@
-import { FileView, Plugin, TAbstractFile, WorkspaceLeaf, WorkspaceItem, WorkspaceSplit, Platform, TFile } from 'obsidian';
-import { WorkspaceItemExt } from './obsidian-ext';
-import { Editor, Position, Token } from 'codemirror';
+import { FileView, TAbstractFile, WorkspaceLeaf, Platform, WorkspaceWindow, WorkspaceParent, WorkspaceItem } from 'obsidian';
+import { WorkspaceItemExt, WorkspaceParentExt } from './obsidian-ext';
 import { SlidingPanesSettings, SlidingPanesSettingTab, SlidingPanesCommands, Orientation } from './settings';
 import { PluginBase } from './plugin-base'
 
@@ -11,21 +10,8 @@ export default class SlidingPanesPlugin extends PluginBase {
   // helper variables
   private activeLeafIndex: number = 0;
 
-  // helper gets for any casts (for undocumented API stuff)
-  private get rootSplitAny(): any { return this.rootSplit as any; }
-  private get rootContainerEl(): HTMLElement { return (this.app.workspace.rootSplit as WorkspaceItem as WorkspaceItemExt).containerEl; }
-  private get rootLeaves(): WorkspaceLeaf[] {
-    const rootContainerEl = this.rootContainerEl;
-    let rootLeaves: WorkspaceLeaf[] = [];
-    this.app.workspace.iterateRootLeaves((leaf: any) => {
-      if (leaf.containerEl.parentElement === rootContainerEl) {
-        rootLeaves.push(leaf);
-      }
-    })
-    return rootLeaves;
-  }
-  private prevRootLeaves: WorkspaceLeaf[] = [];
-
+  private prevRootLeaves: WorkspaceItemExt[] = [];
+  
   // runs when the plugin is loaded
   onload = async () => {
     // load settings
@@ -72,10 +58,6 @@ export default class SlidingPanesPlugin extends PluginBase {
     // we don't need the event handler anymore
     this.app.workspace.off('layout-ready', this.reallyEnable);
 
-    // backup the function so I can restore it
-    this.rootSplitAny.oldOnChildResizeStart = this.rootSplitAny.onChildResizeStart;
-    this.rootSplitAny.onChildResizeStart = this.onChildResizeStart;
-
     // add some extra classes that can't fit in the styles.css
     // because they use settings
     this.addStyle();
@@ -90,11 +72,14 @@ export default class SlidingPanesPlugin extends PluginBase {
     // get rid of the extra style tag we added
     this.removeStyle();
 
-    // iterate through the root leaves to remove the stuff we added
-    this.rootLeaves.forEach(this.clearLeaf);
+    // get and loop through the root splits (there may be more than one if using popout windows)
+    const rootSplits = this.getRootSplits();
+    rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
+      const rootLeaves:WorkspaceItemExt[] = rootSplit.children
 
-    // restore the default functionality
-    this.rootSplitAny.onChildResizeStart = this.rootSplitAny.oldOnChildResizeStart;
+      // loop through all the leaves
+      rootLeaves.forEach(this.clearLeaf);
+    });
   }
 
   clearLeaf = (leaf: any) => {
@@ -104,7 +89,7 @@ export default class SlidingPanesPlugin extends PluginBase {
     leaf.containerEl.classList.remove('mod-am-left-of-active');
     leaf.containerEl.classList.remove('mod-am-right-of-active');
 
-    const iconEl = (leaf.view as any).iconEl;
+    const iconEl = leaf.view.iconEl;
     const iconText:string = iconEl.getAttribute("aria-label");
     if (iconText.includes("(")) {
       iconEl.setAttribute("aria-label", iconText.substring(iconText.lastIndexOf('(') + 1, iconText.lastIndexOf(')')));
@@ -159,10 +144,10 @@ export default class SlidingPanesPlugin extends PluginBase {
       el.innerText = `body.plugin-sliding-panes{--header-width:${this.settings.headerWidth}px;}`;
       if (!this.settings.leafAutoWidth) {
         if (Platform.isDesktop) {
-          el.innerText += `body.plugin-sliding-panes .mod-root>.workspace-leaf{width:${this.settings.leafDesktopWidth + this.settings.headerWidth}px;}`;
+          el.innerText += `body.plugin-sliding-panes .mod-root>.workspace-leaf,body.plugin-sliding-panes .mod-root>.workspace-split{width:${this.settings.leafDesktopWidth + this.settings.headerWidth}px;}`;
         }
         else {
-          el.innerText += `body.plugin-sliding-panes .mod-root>.workspace-leaf{width:${this.settings.leafMobileWidth + this.settings.headerWidth}px;}`;
+          el.innerText += `body.plugin-sliding-panes .mod-root>.workspace-leaf,body.plugin-sliding-panes .mod-root>.workspace-split{width:${this.settings.leafMobileWidth + this.settings.headerWidth}px;}`;
         }
       }
     }
@@ -185,7 +170,13 @@ export default class SlidingPanesPlugin extends PluginBase {
   }
 
   handleLayoutChange = () => {
-    const rootLeaves = this.rootLeaves;
+
+    // get and loop through the root splits (there may be more than one if using popout windows)
+    const rootSplits = this.getRootSplits();
+    const rootLeaves:WorkspaceItemExt[] = [];
+    rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
+      rootLeaves.push(...rootSplit.children)
+    });
     if (rootLeaves.length < this.prevRootLeaves.length) {
       this.prevRootLeaves.forEach((leaf: any) => {
         if (!rootLeaves.contains(leaf)) {
@@ -193,64 +184,80 @@ export default class SlidingPanesPlugin extends PluginBase {
         }
       })
     }
-    this.prevRootLeaves = this.rootLeaves;
+    this.prevRootLeaves = rootLeaves;
     //this.recalculateLeaves();
   }
 
   // Recalculate the leaf sizing and positions
   recalculateLeaves = () => {
-    // rootSplit.children is undocumented for now, but it's easier to use for what we're doing.
-    // we only want leaves at the root of the root split
-    // (this is to fix compatibility with backlinks in document and other such plugins)
-    const rootContainerEl = this.rootContainerEl;
-    const rootLeaves = this.rootLeaves;
-    const leafCount = rootLeaves.length;
+    // get and loop through the root splits (there may be more than one if using popout windows)
+    const rootSplits = this.getRootSplits();
+    rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
+      const rootContainerEl:HTMLElement = rootSplit.containerEl
 
-    let totalWidth = 0;
+      // get the client width of the root container once, before looping through the leaves
+      const rootContainerElWidth = rootContainerEl.clientWidth
+      
+      const rootLeaves:WorkspaceItemExt[] = rootSplit.children
+      let leafCount = rootLeaves.length;
+      let totalWidth = 0;
+      let widthChange = false;
 
-    // iterate through all the root-level leaves
-    let widthChange = false;
-    rootLeaves.forEach((leaf: WorkspaceLeaf, i: number) => {
+      // loop through all the leaves
+      rootLeaves.forEach((leaf: WorkspaceItemExt, i:number) => {
+      
+        const containerEl = leaf.containerEl;
 
-      // @ts-ignore to get the undocumented containerEl
-      const containerEl = leaf.containerEl;
+        // if the leaf still has flex, remove it
+        if(containerEl.style.flex) containerEl.style.flex = null;
+        // get the current width of the leaf's element
+        const oldWidth = containerEl.clientWidth;
 
-      containerEl.style.flex = null;
-      const oldWidth = containerEl.clientWidth;
-      if (this.settings.leafAutoWidth) {
-        containerEl.style.width = (rootContainerEl.clientWidth - ((leafCount - 1) * this.settings.headerWidth)) + "px";
-      }
-      else {
-        containerEl.style.width = null;
-      }
-      if (oldWidth == containerEl.clientWidth) widthChange = true;
+        let newWidth = oldWidth;
 
-      containerEl.style.left = this.settings.stackingEnabled
-        ? (i * this.settings.headerWidth) + "px"
-        : null;
-      containerEl.style.right = this.settings.stackingEnabled
-        ? (((leafCount - i) * this.settings.headerWidth) - containerEl.clientWidth) + "px"
-        : null;
-      // keep track of the total width of all leaves
-      totalWidth += containerEl.clientWidth;
+        // if using auto-width, calculate the appropriate width
+        if (this.settings.leafAutoWidth) {
+          newWidth = (rootContainerElWidth - ((leafCount - 1) * this.settings.headerWidth));
+          // if the width is not correct, update it
+          if(oldWidth != newWidth) {
+            containerEl.style.width = newWidth + "px"
+            widthChange = true;
+          }
+        }
+        else {
+          if(containerEl.style.width){
+            containerEl.style.width = null;
+            widthChange = true;
+          }
+        }
 
-      const iconEl = (leaf.view as any).iconEl;
-      const iconText = iconEl.getAttribute("aria-label");
-      if (!iconText.includes("(")) {
-        iconEl.setAttribute("aria-label", `${leaf.getDisplayText()} (${iconText})`);
-      }
-    });
+        // set left and right for sticky headers
+        const newLeft = this.settings.stackingEnabled
+          ? (i * this.settings.headerWidth) + "px"
+          : null;
+        if(newLeft != containerEl.style.left) containerEl.style.left = newLeft
 
-    // if the total width of all leaves is less than the width available,
-    // add back the flex class so they fill the space
-    if (totalWidth < rootContainerEl.clientWidth) {
-      rootLeaves.forEach((leaf: any) => {
-        leaf.containerEl.style.flex = '1 0 0';
+        const newRight = this.settings.stackingEnabled
+          ? (((leafCount - i) * this.settings.headerWidth) - newWidth) + "px"
+          : null;
+        if(newRight != containerEl.style.right) containerEl.style.right = newRight
+
+        // keep track of the total width of all leaves
+        totalWidth += newWidth;
       });
-    }
 
-    let activeLeaf: WorkspaceItemExt = this.app.workspace.getLeaf() as WorkspaceItem as WorkspaceItemExt;
-    if(widthChange) this.focusLeaf(activeLeaf, !this.settings.leafAutoWidth);
+      // if the total width is less than that of the root container, we can go back to the flex layout
+      if (totalWidth < rootContainerElWidth) {
+      rootLeaves.forEach((leaf: any) => {
+          leaf.containerEl.style.flex = '1 0 0';
+        });
+      }
+
+      let activeLeaf: WorkspaceItemExt = this.app.workspace.getLeaf() as WorkspaceItem as WorkspaceItemExt;
+      // if the active leaf is in the current container, and the width has changed, refocus the active leaf
+      // @ts-ignore because WorkspaceContainer doesn't overlap with WorkspaceParent, but the container *will be* a WorkspaceParent, so do it anyway
+      if(activeLeaf.getContainer() === rootSplit && widthChange) this.focusLeaf(activeLeaf, !this.settings.leafAutoWidth);
+    })
   }
 
   handleActiveLeafChange = (leaf: WorkspaceLeaf | null) =>{
@@ -258,17 +265,18 @@ export default class SlidingPanesPlugin extends PluginBase {
       this.focusLeaf(leaf as WorkspaceItem as WorkspaceItemExt);
     }
   }
-
+  
   focusLeaf(activeLeaf:WorkspaceItemExt, animated: boolean = true) {
-    // get back to the leaf which has been andy'd (`any` because parentSplit is undocumented)
-    while (activeLeaf != null && activeLeaf.parentSplit != null && activeLeaf.parentSplit != this.app.workspace.rootSplit) {
-      activeLeaf = activeLeaf.parentSplit as WorkspaceItemExt;
+    // @ts-ignore because WorkspaceContainer doesn't overlap with WorkspaceParent, but the container *will be* a WorkspaceParent, so do it anyway
+    const rootSplit = activeLeaf.getContainer() as WorkspaceParentExt;
+    while (activeLeaf != null && activeLeaf.parentSplit != null && activeLeaf.parentSplit !== rootSplit) {
+      activeLeaf = activeLeaf.parentSplit;
     }
 
-    if (activeLeaf != null && this.rootSplit && activeLeaf.parentSplit == this.rootSplit) {
+    if (activeLeaf != null && activeLeaf.parentSplit != null && activeLeaf.parentSplit === rootSplit) {
 
-      const rootContainerEl = this.rootContainerEl;
-      const rootLeaves = this.rootLeaves;
+      const rootContainerEl = rootSplit.containerEl;
+      const rootLeaves = rootSplit.children;
       const leafCount = rootLeaves.length;
 
       // get the index of the active leaf
@@ -277,8 +285,7 @@ export default class SlidingPanesPlugin extends PluginBase {
       // left until we get to the active one and add all their widths together
       let position = 0;
       this.activeLeafIndex = -1;
-      rootLeaves.forEach((leaf: WorkspaceItem, index: number) => {
-        // @ts-ignore to get the undocumented containerEl
+      rootLeaves.forEach((leaf: WorkspaceItemExt, index: number) => {
         const containerEl = leaf.containerEl;
 
         // this is the active one
@@ -334,41 +341,21 @@ export default class SlidingPanesPlugin extends PluginBase {
     leavesToDetach.forEach(leaf => leaf.detach());
   };
 
-  // overriden function for rootSplit child resize
-  onChildResizeStart = (leaf: any, event: any) => {
+  getRootSplits = ():WorkspaceParentExt[] => {
+    const rootSplits:WorkspaceParentExt[] = [];
 
-    // only really apply this to vertical splits
-    if (this.rootSplitAny.direction === "vertical") {
-      // this is the width the leaf started at before resize
-      const startWidth = leaf.containerEl.clientWidth;
+    // push the main window's root split to the list
+    rootSplits.push(this.app.workspace.rootSplit as WorkspaceParent as WorkspaceParentExt)
 
-      // the mousemove event to trigger while resizing
-      const mousemove = (e: any) => {
-        // get the difference between the first position and current
-        const deltaX = e.pageX - event.pageX;
-        // adjust the start width by the delta
-        leaf.containerEl.style.width = `${startWidth + deltaX}px`;
+    // @ts-ignore floatingSplit is undocumented
+    const floatingSplit = this.app.workspace.floatingSplit as WorkspaceParentExt;
+    floatingSplit.children.forEach((child: WorkspaceParentExt) => {
+      // if this is a window, push it to the list 
+      if (child instanceof WorkspaceWindow) {
+        rootSplits.push(child);
       }
+    });
 
-      // the mouseup event to trigger at the end of resizing
-      const mouseup = () => {
-        // if stacking is enabled, we need to re-jig the "right" value
-        if (this.settings.stackingEnabled) {
-          // we need the leaf count and index to calculate the correct value
-          const rootLeaves = this.rootLeaves;
-          const leafCount = rootLeaves.length;
-          const leafIndex = rootLeaves.findIndex((l: any) => l == leaf);
-          leaf.containerEl.style.right = (((leafCount - leafIndex - 1) * this.settings.headerWidth) - leaf.containerEl.clientWidth) + "px";
-        }
-
-        // remove these event listeners. We're done with them
-        document.removeEventListener("mousemove", mousemove);
-        document.removeEventListener("mouseup", mouseup);
-      }
-
-      // Add the above two event listeners
-      document.addEventListener("mousemove", mousemove);
-      document.addEventListener("mouseup", mouseup);
-    }
+    return rootSplits;
   }
 }

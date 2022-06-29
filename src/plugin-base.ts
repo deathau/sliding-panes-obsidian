@@ -1,11 +1,5 @@
 import './styles.scss'
-import { Plugin, WorkspaceSplit } from 'obsidian';
-
-// interface for extending WorkspaceSplit with undocumented properties
-export interface WorkspaceSplitExt extends WorkspaceSplit {
-  // the container element of a leaf
-  containerEl: HTMLElement;
-}
+import { Plugin } from 'obsidian';
 
 export abstract class PluginBase extends Plugin {
 
@@ -21,9 +15,6 @@ export abstract class PluginBase extends Plugin {
 
     return this._cachedClassName;
   }
-
-  // helper property to get the rootSplit with some extra properties
-  get rootSplit() { return this.app.workspace.rootSplit as WorkspaceSplitExt; }
 
   // runs when the plugin is loaded
   onload = () => {

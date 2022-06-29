@@ -1,4 +1,4 @@
-body:not(.is-popout-window).plugin-sliding-panes .workspace>.mod-root {
+body.plugin-sliding-panes .workspace>.mod-root {
     overflow-x: auto;
     overflow-y: hidden;
 
@@ -11,6 +11,9 @@ body:not(.is-popout-window).plugin-sliding-panes .workspace>.mod-root {
         }
     }
     
+    &>.workspace-split {
+        flex: none;
+    }
 
     // these two help with the scrolling issue (#17)
     .mod-am-right-of-active .cm-s-obsidian>div:not([class]) {
@@ -21,11 +24,13 @@ body:not(.is-popout-window).plugin-sliding-panes .workspace>.mod-root {
     }
     
 }
-body:not(.is-popout-window).plugin-sliding-panes-stacking .workspace>.mod-root>.workspace-leaf {
+body.plugin-sliding-panes-stacking .workspace>.mod-root>.workspace-leaf,
+body.plugin-sliding-panes-stacking .workspace>.mod-root>.workspace-split {
     box-shadow: 0px 0px 20px 20px rgba(0, 0, 0, 0.25);
     position: sticky;
 }
-body:not(.is-popout-window).plugin-sliding-panes-rotate-header .workspace>.mod-root>.workspace-leaf {
+body.plugin-sliding-panes-rotate-header .workspace>.mod-root>.workspace-leaf,
+body.plugin-sliding-panes-rotate-header .workspace>.mod-root>.workspace-split {
     /* first we'll add a bit of gap for the spines */
     &>.workspace-leaf-content {
         padding-left: var(--header-width);
@@ -63,7 +68,7 @@ body:not(.is-popout-window).plugin-sliding-panes-rotate-header .workspace>.mod-r
                     height: 15px;
                     top: unset;
                     bottom: 0;
-                    background: linear-gradient(to bottom, transparent, var(--background-secondary));
+                    background: linear-gradient(to bottom, transparent, var(--background-primary-alt));
                 }
                 &:before {
                     content:'';
@@ -72,7 +77,7 @@ body:not(.is-popout-window).plugin-sliding-panes-rotate-header .workspace>.mod-r
                     height: 15px;
                     top: 0;
                     bottom: unset;
-                    background: linear-gradient(to top, transparent, var(--background-secondary));
+                    background: linear-gradient(to top, transparent, var(--background-primary-alt));
                 }
             }
 
@@ -83,11 +88,11 @@ body:not(.is-popout-window).plugin-sliding-panes-rotate-header .workspace>.mod-r
             }
 
             .view-header-icon {
-                margin: 8px 0 3px 0;
+                margin: 8px auto 3px auto;
             }
         
             .view-action {
-                margin: 8px 0;
+                margin: 8px auto;
             }
         }
     
@@ -104,14 +109,14 @@ body:not(.is-popout-window).plugin-sliding-panes-rotate-header .workspace>.mod-r
         border-right: 2px solid var(--interactive-accent);
         border-bottom: none;
         &>.view-header-title-container:after {
-            background: linear-gradient(to bottom, transparent, var(--background-primary-alt));
+            background: linear-gradient(to bottom, transparent, var(--background-primary));
         }
         &>.view-header-title-container:before {
-            background: linear-gradient(to top, transparent, var(--background-primary-alt));
+            background: linear-gradient(to top, transparent, var(--background-primary));
         }
     }
 }
-body:not(.is-popout-window).plugin-sliding-panes-rotate-header.plugin-sliding-panes-header-alt .workspace>.mod-root>.workspace-leaf>.workspace-leaf-content>.view-header {
+body.plugin-sliding-panes-rotate-header.plugin-sliding-panes-header-alt .workspace>.mod-root>.workspace-leaf>.workspace-leaf-content>.view-header {
     .view-header-title-container {
         transform: rotate(180deg);
         text-align: right;
@@ -119,7 +124,7 @@ body:not(.is-popout-window).plugin-sliding-panes-rotate-header.plugin-sliding-pa
     }
 }
                 
-body:not(.is-popout-window).plugin-sliding-panes-rotate-header.plugin-sliding-select-orientation {
+body.plugin-sliding-panes-rotate-header.plugin-sliding-select-orientation {
     $selector: ".workspace>.mod-root>.workspace-leaf>.workspace-leaf-content>.view-header";
 
     &-sideway #{$selector} {
