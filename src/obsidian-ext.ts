@@ -1,4 +1,4 @@
-import { WorkspaceItem, WorkspaceParent } from 'obsidian';
+import { Workspace, WorkspaceItem, WorkspaceParent, WorkspaceWindow } from 'obsidian';
 
 export interface WorkspaceItemExt extends WorkspaceItem {
   // the parent of the item
@@ -12,4 +12,8 @@ export interface WorkspaceItemExt extends WorkspaceItem {
 export interface WorkspaceParentExt extends WorkspaceParent, WorkspaceItemExt {
   // the child items of the split
   children: WorkspaceItemExt[];
+}
+
+export class WorkspaceExt extends Workspace {
+  floatingSplit: WorkspaceParentExt;
 }

@@ -1,5 +1,5 @@
 import { FileView, TAbstractFile, WorkspaceLeaf, Platform, WorkspaceWindow, WorkspaceParent, WorkspaceItem } from 'obsidian';
-import { WorkspaceItemExt, WorkspaceParentExt } from './obsidian-ext';
+import { WorkspaceExt, WorkspaceItemExt, WorkspaceParentExt } from './obsidian-ext';
 import { SlidingPanesSettings, SlidingPanesSettingTab, SlidingPanesCommands, Orientation } from './settings';
 import { PluginBase } from './plugin-base'
 
@@ -170,7 +170,7 @@ export default class SlidingPanesPlugin extends PluginBase {
   }
 
   handleLayoutChange = () => {
-
+    
     // get and loop through the root splits (there may be more than one if using popout windows)
     const rootSplits = this.getRootSplits();
     const rootLeaves:WorkspaceItemExt[] = [];
@@ -190,6 +190,7 @@ export default class SlidingPanesPlugin extends PluginBase {
 
   // Recalculate the leaf sizing and positions
   recalculateLeaves = () => {
+    let activeLeaf: WorkspaceItemExt = this.app.workspace.getLeaf() as WorkspaceItem as WorkspaceItemExt;
     // get and loop through the root splits (there may be more than one if using popout windows)
     const rootSplits = this.getRootSplits();
     rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
@@ -197,66 +198,48 @@ export default class SlidingPanesPlugin extends PluginBase {
 
       // get the client width of the root container once, before looping through the leaves
       const rootContainerElWidth = rootContainerEl.clientWidth
+      const rootContainerElScrollWidth = rootContainerEl.scrollWidth
       
       const rootLeaves:WorkspaceItemExt[] = rootSplit.children
       let leafCount = rootLeaves.length;
-      let totalWidth = 0;
+
+      const leafWidth = this.settings.leafAutoWidth 
+        ? (rootContainerElWidth - ((leafCount - 1) * this.settings.headerWidth))
+        : (Platform.isDesktop ? this.settings.leafDesktopWidth : this.settings.leafMobileWidth);
+        
+      let totalWidth = leafCount * leafWidth;
       let widthChange = false;
 
       // loop through all the leaves
       rootLeaves.forEach((leaf: WorkspaceItemExt, i:number) => {
-      
         const containerEl = leaf.containerEl;
+        // the default values for the leaf
+        let flex = '1 0 0'
+        let width = leafWidth;
+        let left = null
+        let right = null
 
-        // if the leaf still has flex, remove it
-        if(containerEl.style.flex) containerEl.style.flex = null;
-        // get the current width of the leaf's element
-        const oldWidth = containerEl.clientWidth;
-
-        let newWidth = oldWidth;
-
-        // if using auto-width, calculate the appropriate width
-        if (this.settings.leafAutoWidth) {
-          newWidth = (rootContainerElWidth - ((leafCount - 1) * this.settings.headerWidth));
-          // if the width is not correct, update it
-          if(oldWidth != newWidth) {
-            containerEl.style.width = newWidth + "px"
-            widthChange = true;
-          }
-        }
-        else {
-          if(containerEl.style.width){
-            containerEl.style.width = null;
-            widthChange = true;
+        if (totalWidth > rootContainerElWidth) {
+          // if the total width is greater than the root container width, we need to limit the leaves
+          flex = null
+          if(!width) width = leafWidth
+          if(this.settings.stackingEnabled){
+            // if stacking is enabled, we need to set the left and right values
+            left = (i * this.settings.headerWidth) + "px"
+            right = (((leafCount - i) * this.settings.headerWidth) - leafWidth) + "px"
           }
         }
 
-        // set left and right for sticky headers
-        const newLeft = this.settings.stackingEnabled
-          ? (i * this.settings.headerWidth) + "px"
-          : null;
-        if(newLeft != containerEl.style.left) containerEl.style.left = newLeft
-
-        const newRight = this.settings.stackingEnabled
-          ? (((leafCount - i) * this.settings.headerWidth) - newWidth) + "px"
-          : null;
-        if(newRight != containerEl.style.right) containerEl.style.right = newRight
-
-        // keep track of the total width of all leaves
-        totalWidth += newWidth;
+        // set the html attributes for the leaf (if they have changed)
+        if(containerEl.style.flex != flex || containerEl.style.width != width + "px" || containerEl.style.left != left || containerEl.style.right != right){
+          widthChange = containerEl.style.width != width + "px"
+          const style = {flex, left, right, width: width + "px"}
+          Object.assign(containerEl.style, style)
+        }
       });
 
-      // if the total width is less than that of the root container, we can go back to the flex layout
-      if (totalWidth < rootContainerElWidth) {
-      rootLeaves.forEach((leaf: any) => {
-          leaf.containerEl.style.flex = '1 0 0';
-        });
-      }
-
-      let activeLeaf: WorkspaceItemExt = this.app.workspace.getLeaf() as WorkspaceItem as WorkspaceItemExt;
       // if the active leaf is in the current container, and the width has changed, refocus the active leaf
-      // @ts-ignore because WorkspaceContainer doesn't overlap with WorkspaceParent, but the container *will be* a WorkspaceParent, so do it anyway
-      if(activeLeaf.getContainer() === rootSplit && widthChange) this.focusLeaf(activeLeaf, !this.settings.leafAutoWidth);
+      if(activeLeaf.getContainer() as unknown as WorkspaceParentExt === rootSplit && widthChange) this.focusLeaf(activeLeaf, !this.settings.leafAutoWidth);
     })
   }
 
@@ -267,8 +250,7 @@ export default class SlidingPanesPlugin extends PluginBase {
   }
   
   focusLeaf(activeLeaf:WorkspaceItemExt, animated: boolean = true) {
-    // @ts-ignore because WorkspaceContainer doesn't overlap with WorkspaceParent, but the container *will be* a WorkspaceParent, so do it anyway
-    const rootSplit = activeLeaf.getContainer() as WorkspaceParentExt;
+    const rootSplit = activeLeaf.getContainer() as unknown as WorkspaceParentExt;
     while (activeLeaf != null && activeLeaf.parentSplit != null && activeLeaf.parentSplit !== rootSplit) {
       activeLeaf = activeLeaf.parentSplit;
     }
@@ -347,8 +329,7 @@ export default class SlidingPanesPlugin extends PluginBase {
     // push the main window's root split to the list
     rootSplits.push(this.app.workspace.rootSplit as WorkspaceParent as WorkspaceParentExt)
 
-    // @ts-ignore floatingSplit is undocumented
-    const floatingSplit = this.app.workspace.floatingSplit as WorkspaceParentExt;
+    const floatingSplit = (this.app.workspace as WorkspaceExt).floatingSplit as WorkspaceParentExt;
     floatingSplit.children.forEach((child: WorkspaceParentExt) => {
       // if this is a window, push it to the list 
       if (child instanceof WorkspaceWindow) {
