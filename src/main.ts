@@ -46,11 +46,16 @@ export default class SlidingPanesPlugin extends PluginBase {
       this.registerEvent(this.app.workspace.on('resize', this.handleResize));
       this.registerEvent(this.app.workspace.on('layout-change', this.handleLayoutChange));
       this.registerEvent(this.app.workspace.on('active-leaf-change', this.handleActiveLeafChange));
+      this.registerEvent(this.app.workspace.on('window-open', this.handleWindowOpen))
       this.registerEvent(this.app.vault.on('delete', this.handleDelete));
 
       // wait for layout to be ready to perform the rest
       if(this.app.workspace.layoutReady) this.reallyEnable() 
     }
+  }
+
+  handleWindowOpen = (window: WorkspaceWindow) => {
+    this.swizzleChildResize(window as WorkspaceParent as WorkspaceParentExt)
   }
 
   // really enable things (once the layout is ready)
@@ -61,6 +66,12 @@ export default class SlidingPanesPlugin extends PluginBase {
     // add some extra classes that can't fit in the styles.css
     // because they use settings
     this.addStyle();
+
+    // get and loop through the root splits (there may be more than one if using popout windows)
+    const rootSplits = this.getRootSplits();
+    rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
+      this.swizzleChildResize(rootSplit)
+    });
 
     // do all the calucations necessary for the workspace leaves
     this.recalculateLeaves();
@@ -75,17 +86,26 @@ export default class SlidingPanesPlugin extends PluginBase {
     // get and loop through the root splits (there may be more than one if using popout windows)
     const rootSplits = this.getRootSplits();
     rootSplits.forEach((rootSplit: WorkspaceParentExt) => {
+      this.unswizzleChildResize(rootSplit)
       const rootLeaves:WorkspaceItemExt[] = rootSplit.children
 
       // loop through all the leaves
       rootLeaves.forEach(this.clearLeaf);
     });
+
+    this.app.workspace.off('resize', this.handleResize)
+    this.app.workspace.off('layout-change', this.handleLayoutChange)
+    this.app.workspace.off('active-leaf-change', this.handleActiveLeafChange)
+    this.app.workspace.off('window-open', this.handleWindowOpen)
+    this.app.vault.off('delete', this.handleDelete)
   }
 
   clearLeaf = (leaf: any) => {
-    leaf.containerEl.style.width = null;
-    leaf.containerEl.style.left = null;
-    leaf.containerEl.style.right = null;
+    leaf.containerEl.style.width = null
+    leaf.containerEl.style.left = null
+    leaf.containerEl.style.right = null
+    leaf.containerEl.style.flex = null
+    leaf.containerEl.style.flexGrow = leaf.dimension
     leaf.containerEl.classList.remove('mod-am-left-of-active');
     leaf.containerEl.classList.remove('mod-am-right-of-active');
 
@@ -188,6 +208,56 @@ export default class SlidingPanesPlugin extends PluginBase {
     //this.recalculateLeaves();
   }
 
+  unswizzleChildResize = (rootSplit: WorkspaceParentExt) => {
+    rootSplit.onChildResizeStart = rootSplit.oldChildResizeStart;
+    console.log('post UNswizzle equal?', rootSplit.onChildResizeStart == rootSplit.oldChildResizeStart)
+  }
+
+  swizzleChildResize = (rootSplit: WorkspaceParentExt) => {
+    rootSplit.oldChildResizeStart = rootSplit.onChildResizeStart
+    rootSplit.onChildResizeStart = (leaf: WorkspaceItemExt, event: MouseEvent) => {
+      console.log("swizzled child resize start")
+      // only really apply this to vertical splits
+      if (rootSplit.direction === "vertical") {
+        // this is the width the leaf started at before resize
+        const startWidth = leaf.width;
+  
+        // the mousemove event to trigger while resizing
+        const mousemove = (e: any) => {
+          // get the difference between the first position and current
+          const deltaX = e.pageX - event.pageX;
+          // adjust the start width by the delta
+          leaf.width = startWidth + deltaX
+          leaf.containerEl.style.width = leaf.width + "px";
+        }
+  
+        // the mouseup event to trigger at the end of resizing
+        const mouseup = () => {
+          // if stacking is enabled, we need to re-jig the "right" value
+          if (this.settings.stackingEnabled) {
+            // we need the leaf count and index to calculate the correct value
+            const rootLeaves = rootSplit.children;
+            const leafCount = rootLeaves.length;
+            const leafIndex = rootLeaves.findIndex((l: any) => l == leaf);
+            for(var i = leafIndex; i < leafCount; i++) {
+              rootLeaves[i].containerEl.style.right = (((leafCount - i) * this.settings.headerWidth) - rootLeaves[i].width) + "px";
+            }
+          }
+  
+          // remove these event listeners. We're done with them
+          rootSplit.doc.removeEventListener("mousemove", mousemove);
+          rootSplit.doc.removeEventListener("mouseup", mouseup);
+        }
+  
+        // Add the above two event listeners
+        rootSplit.doc.addEventListener("mousemove", mousemove);
+        rootSplit.doc.addEventListener("mouseup", mouseup);
+      }
+    }
+
+    console.log('post swizzle equal?', rootSplit.onChildResizeStart == rootSplit.oldChildResizeStart)
+  }
+
   // Recalculate the leaf sizing and positions
   recalculateLeaves = () => {
     let activeLeaf: WorkspaceItemExt = this.app.workspace.getLeaf() as WorkspaceItem as WorkspaceItemExt;
@@ -198,7 +268,6 @@ export default class SlidingPanesPlugin extends PluginBase {
 
       // get the client width of the root container once, before looping through the leaves
       const rootContainerElWidth = rootContainerEl.clientWidth
-      const rootContainerElScrollWidth = rootContainerEl.scrollWidth
       
       const rootLeaves:WorkspaceItemExt[] = rootSplit.children
       let leafCount = rootLeaves.length;
@@ -215,7 +284,7 @@ export default class SlidingPanesPlugin extends PluginBase {
         const containerEl = leaf.containerEl;
         // the default values for the leaf
         let flex = '1 0 0'
-        let width = leafWidth;
+        let width = leaf.width;
         let left = null
         let right = null
 
@@ -236,6 +305,9 @@ export default class SlidingPanesPlugin extends PluginBase {
           const style = {flex, left, right, width: width + "px"}
           Object.assign(containerEl.style, style)
         }
+
+        // set the leaf's width for later reference
+        leaf.width = width
       });
 
       // if the active leaf is in the current container, and the width has changed, refocus the active leaf

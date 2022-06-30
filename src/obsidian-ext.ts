@@ -1,4 +1,4 @@
-import { Workspace, WorkspaceItem, WorkspaceParent, WorkspaceWindow } from 'obsidian';
+import { Workspace, WorkspaceContainer, WorkspaceItem, WorkspaceParent, WorkspaceWindow } from 'obsidian';
 
 export interface WorkspaceItemExt extends WorkspaceItem {
   // the parent of the item
@@ -6,12 +6,23 @@ export interface WorkspaceItemExt extends WorkspaceItem {
 
   // the container element
   containerEl: HTMLElement;
+
+  // the width of the item in pixels
+  width:number;
 }
 
 // interface for extending WorkspaceParent with undocumented properties
-export interface WorkspaceParentExt extends WorkspaceParent, WorkspaceItemExt {
+export interface WorkspaceParentExt extends WorkspaceParent, WorkspaceItemExt, WorkspaceContainer {
   // the child items of the split
   children: WorkspaceItemExt[];
+
+  // function for child resizing
+  onChildResizeStart: (leaf: WorkspaceItemExt, event: MouseEvent) => void;
+  // ...and backup thereof
+  oldChildResizeStart: (leaf: WorkspaceItemExt, event: MouseEvent) => void;
+
+  // split direction
+  direction: 'horizontal' | 'vertical';
 }
 
 export class WorkspaceExt extends Workspace {
