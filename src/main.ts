@@ -210,13 +210,11 @@ export default class SlidingPanesPlugin extends PluginBase {
 
   unswizzleChildResize = (rootSplit: WorkspaceParentExt) => {
     rootSplit.onChildResizeStart = rootSplit.oldChildResizeStart;
-    console.log('post UNswizzle equal?', rootSplit.onChildResizeStart == rootSplit.oldChildResizeStart)
   }
 
   swizzleChildResize = (rootSplit: WorkspaceParentExt) => {
     rootSplit.oldChildResizeStart = rootSplit.onChildResizeStart
     rootSplit.onChildResizeStart = (leaf: WorkspaceItemExt, event: MouseEvent) => {
-      console.log("swizzled child resize start")
       // only really apply this to vertical splits
       if (rootSplit.direction === "vertical") {
         // this is the width the leaf started at before resize
@@ -254,8 +252,6 @@ export default class SlidingPanesPlugin extends PluginBase {
         rootSplit.doc.addEventListener("mouseup", mouseup);
       }
     }
-
-    console.log('post swizzle equal?', rootSplit.onChildResizeStart == rootSplit.oldChildResizeStart)
   }
 
   // Recalculate the leaf sizing and positions
