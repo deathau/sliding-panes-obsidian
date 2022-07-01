@@ -3,7 +3,7 @@ import { WorkspaceExt, WorkspaceItemExt, WorkspaceParentExt } from './obsidian-e
 import { SlidingPanesSettings, SlidingPanesSettingTab, SlidingPanesCommands, Orientation } from './settings';
 import { PluginBase } from './plugin-base'
 
-
+const MIN_PANE_WIDTH = 200;
 export default class SlidingPanesPlugin extends PluginBase {
   settings: SlidingPanesSettings;
 
@@ -226,6 +226,7 @@ export default class SlidingPanesPlugin extends PluginBase {
           const deltaX = e.pageX - event.pageX;
           // adjust the start width by the delta
           leaf.width = startWidth + deltaX
+          if(leaf.width < MIN_PANE_WIDTH) leaf.width = MIN_PANE_WIDTH;
           leaf.containerEl.style.width = leaf.width + "px";
         }
   
@@ -245,11 +246,13 @@ export default class SlidingPanesPlugin extends PluginBase {
           // remove these event listeners. We're done with them
           rootSplit.doc.removeEventListener("mousemove", mousemove);
           rootSplit.doc.removeEventListener("mouseup", mouseup);
+          document.body.removeClass("is-grabbing");
         }
   
         // Add the above two event listeners
         rootSplit.doc.addEventListener("mousemove", mousemove);
         rootSplit.doc.addEventListener("mouseup", mouseup);
+        document.body.addClass("is-grabbing")
       }
     }
   }
@@ -272,7 +275,8 @@ export default class SlidingPanesPlugin extends PluginBase {
         ? (rootContainerElWidth - ((leafCount - 1) * this.settings.headerWidth))
         : (Platform.isDesktop ? this.settings.leafDesktopWidth : this.settings.leafMobileWidth);
         
-      let totalWidth = leafCount * leafWidth;
+      let totalWidthEstimate = leafCount * leafWidth;
+      let totalWidth = 0;
       let widthChange = false;
 
       // loop through all the leaves
@@ -281,10 +285,12 @@ export default class SlidingPanesPlugin extends PluginBase {
         // the default values for the leaf
         let flex = '1 0 0'
         let width = leaf.width;
+        // if the leaf was previously "flex", then the width will be out of whack
+        if(containerEl.style.flexBasis) width = leafWidth
         let left = null
         let right = null
 
-        if (totalWidth > rootContainerElWidth) {
+        if (totalWidthEstimate > rootContainerElWidth) {
           // if the total width is greater than the root container width, we need to limit the leaves
           flex = null
           if(!width) width = leafWidth
@@ -304,6 +310,7 @@ export default class SlidingPanesPlugin extends PluginBase {
 
         // set the leaf's width for later reference
         leaf.width = width
+        totalWidth += width
       });
 
       // if the active leaf is in the current container, and the width has changed, refocus the active leaf
