@@ -311,6 +311,14 @@ export default class SlidingPanesPlugin extends PluginBase {
         // set the leaf's width for later reference
         leaf.width = width
         totalWidth += width
+
+        if(leaf instanceof WorkspaceLeaf){
+          const iconEl = (leaf.view as any).iconEl;
+          const iconText = iconEl.getAttribute("aria-label");
+          if (!iconText.includes("(")) {
+            iconEl.setAttribute("aria-label", `${leaf.getDisplayText()} (${iconText})`);
+          }
+        }
       });
 
       // if the active leaf is in the current container, and the width has changed, refocus the active leaf
