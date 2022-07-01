@@ -101,6 +101,12 @@ much, feel free to throw some coins in my hat via the following:
 
 # Version History
 
+## 3.3.0
+- Sliding panes should now work as expected in popout windows!
+- Pane resizing is back (but not saved to the workspace)
+- Some previous dodginess when toggling the plugin on and off and attempting to resize panes has been resolved
+- (Some) optimisations to streamline and speed things up a little bit.
+
 ## 3.2.5
 - Quick fix to prevent sliding panes in popout windows, as the experience is currently borked.
 
