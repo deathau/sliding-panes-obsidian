@@ -127,7 +127,7 @@ body.plugin-sliding-panes-rotate-header.plugin-sliding-panes-header-alt .workspa
 body.plugin-sliding-panes-rotate-header.plugin-sliding-select-orientation {
     $selector: ".workspace>.mod-root>.workspace-leaf>.workspace-leaf-content>.view-header";
 
-    &-sideway #{$selector} {
+    &-sideways #{$selector} {
         text-orientation: sideways !important;
     }
     &-mixed #{$selector} {
