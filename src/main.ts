@@ -180,7 +180,7 @@ export default class SlidingPanesPlugin extends PluginBase {
   selectOrientation(orient: Orientation) {
     document.body.classList.toggle('plugin-sliding-select-orientation-mixed', orient == 'mixed');
     document.body.classList.toggle('plugin-sliding-select-orientation-upright', orient == 'upright');
-    document.body.classList.toggle('plugin-sliding-select-orientation-sideway', orient == 'sideway');
+    document.body.classList.toggle('plugin-sliding-select-orientation-sideways', orient == 'sideways');
   }
 
   handleResize = () => {

@@ -1,6 +1,6 @@
 import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
-export type Orientation = "sideway" | "mixed" | "upright"
+export type Orientation = "sideways" | "mixed" | "upright"
 
 declare class SlidingPanesPlugin extends Plugin {
   settings: SlidingPanesSettings;
